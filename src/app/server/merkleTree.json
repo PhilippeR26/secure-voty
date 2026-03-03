@@ -1,0 +1,37 @@
+{
+  "format": "standard-v2",
+  "tree": [
+    "0x29de50c968dea48d1b1573e5e35593e94d80614c46d63d3602e3961d42acaff",
+    "0x67160efc165d1090e7468c7d454ef453b7a2aa9322cae88d449086eb47ea71c",
+    "0x61ed79f3eda9549dedad333037a5961d8221a6694aaac6ce3eb7062a5760e40",
+    "0x6470e032be23949b12cc95a0afac6d016869a5a9e351d461500c7d4d9e8b872",
+    "0x46834de20fe71e56d6cda4502646f55e85e3ec51057913e5774c69bbe184483",
+    "0x3fd7b2be14df9890ee14d5b02b3c63e2e14adbd64816e2e018c68da766f8fd4",
+    "0x2905cfde79bcd4924a094f19912f1e7a8ad5e1dc88d7838a2c9e7b959194523"
+  ],
+  "values": [
+    {
+      "value": "0x6d65407961686f6f2e636f6d",
+      "treeIndex": 5
+    },
+    {
+      "value": "0x796f75406f75746c6f6f6b2e636f6d",
+      "treeIndex": 4
+    },
+    {
+      "value": "0x6a65616e2d6d6963686540656c797365652e6672",
+      "treeIndex": 6
+    },
+    {
+      "value": "0x736c6170406169726672616e63652e636f6d",
+      "treeIndex": 3
+    }
+  ],
+  "hashLookup": {
+    "0x2905cfde79bcd4924a094f19912f1e7a8ad5e1dc88d7838a2c9e7b959194523": 2,
+    "0x3fd7b2be14df9890ee14d5b02b3c63e2e14adbd64816e2e018c68da766f8fd4": 0,
+    "0x46834de20fe71e56d6cda4502646f55e85e3ec51057913e5774c69bbe184483": 1,
+    "0x6470e032be23949b12cc95a0afac6d016869a5a9e351d461500c7d4d9e8b872": 3
+  },
+  "hashType": "Poseidon"
+}
