@@ -3,6 +3,10 @@ target/dev/.fingerprint/
 target/dev/incremental/
 target/dev/*test*
 target/dev/*artifacts*
+target/release/.fingerprint/
+target/release/incremental/
+target/release/*test*
+target/release/*artifacts*
 .snfoundry_cache/
 snfoundry_trace/
 coverage/

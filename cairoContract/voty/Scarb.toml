@@ -1,26 +1,22 @@
 [package]
-name = "verify_voty"
-version = "1.0.0"
+name = "secure_voty"
+version = "0.1.0"
 edition = "2024_07"
 
 # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
 
 [dependencies]
-starknet = "2.15.2"
+starknet = ">=2.16.0"
 
 [dev-dependencies]
 snforge_std = "0.56.0"
-assert_macros = "2.15.0"
+assert_macros = ">=2.16.0"
 
 [[target.starknet-contract]]
 sierra = true
 casm = true
+allowed-libfuncs-list.name = "all"
 
-# [scripts]
-# test = "snforge test"
-
-# [tool.scarb]
-# allow-prebuilt-plugins = ["snforge_std"]
 
 # Visit https://foundry-rs.github.io/starknet-foundry/appendix/scarb-toml.html for more information
 

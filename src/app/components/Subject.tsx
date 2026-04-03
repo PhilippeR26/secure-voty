@@ -4,7 +4,7 @@ import { Box, Center } from "@chakra-ui/react";
 import { useStoreChoice } from "./contextChoice";
 
 export default function Subject() {
-    const { emailOK } = useStoreChoice();
+    const { userAuthorized: emailOK } = useStoreChoice();
 
     return (
         <>

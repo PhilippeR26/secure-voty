@@ -5,12 +5,15 @@ import { useStoreChoice } from "./contextChoice";
 import { useState } from "react";
 import { Toaster, toaster } from "@/components/ui/toaster"
 import { checkWhitelist, getRoot } from "../server/voterProofs";
-import { CairoBytes31, hash,num } from "starknet";
+import { CairoBytes31, CallData, hash, num } from "starknet";
+import type { L1L2message, PrivateInputsForProof, ProveResult, PublicInputsForProof } from "../types";
+import { getSNProof } from "../server/getSNProof";
+import { l1l2MessageAbi } from "../const/l1l2MessageAbi";
 
 
 export default function Choices() {
     const [value, setValue] = useState<string | null>(null);
-    const { choice, setChoice, emailOK, email } = useStoreChoice();
+    const { choice, setChoice, userAuthorized: emailOK, email, secret } = useStoreChoice();
 
     const items = [
         { value: "1", label: "For sure 🕶️" },
@@ -22,62 +25,58 @@ export default function Choices() {
 
     async function handleVote() {
         if (!value) return;
-        console.log("Vote pour :", value);
+        console.log("Vote for :", value);
         setChoice(Number(value));
         toaster.create({
-            description: "Data preparation. Please wait...",
+            description: "Data preparation. Please wait 40 sec...",
             type: "info",
             closable: true,
-            duration: 40_000,
+            duration: 50_000,
         });
         // call backend to generate the proof
         const merkleRoot = await getRoot();
         const vote = value;
-        const secret = "0x123"; // TODO: generate the secret and store it in the state
-        const round = 1;
-        const nullifier = hash.computePoseidonHashOnElements([secret, round]);
-        const proof = await checkWhitelist(new CairoBytes31(email).toHexString());
+        const round = 0;
+        // const nullifier = hash.computePoseidonHashOnElements([secret, round]);
+        const proof = await checkWhitelist(new CairoBytes31(email).toHexString(), process.env.NEXT_PUBLIC_API_KEY!);
         const memberLeaf = proof.leafHash;
         const memberIndex = proof.index;
         const merkleProof = proof.proof;
-        const params = [
-            merkleRoot,
+        const public_input: PublicInputsForProof = {
             vote,
-            nullifier,
             round,
-            memberLeaf,
-            memberIndex,
-            merkleProof.length,
-            ...merkleProof,
-            secret
-        ];
-        console.log("Proof params to send to the backend contract:", params);
+        };
+        const private_input: PrivateInputsForProof = {
+            member_leaf: memberLeaf,
+            merkle_proof: merkleProof,
+            secret: secret!
+        };
+
         try {
-            
-             const res = await fetch('http://localhost:4000/prove', { // local backend test
-            // const res = await fetch('https://secure-voty-backend-production.up.railway.app/prove', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-API-Key': process.env.NEXT_PUBLIC_API_KEY||"error_no_api_key",
-                },
-                body: JSON.stringify({ params: params.map((p) => num.toHex(p)) })
-            });
+            const proofRes: ProveResult = await getSNProof(public_input, private_input, process.env.NEXT_PUBLIC_API_KEY!);
 
-            if (!res.ok) throw new Error('Backend error');
 
-            const data = await res.json();
-            if (!data.success) throw new Error(data.error);
+            const messageCallData = new CallData(l1l2MessageAbi);
+            const messageContent = messageCallData.decodeParameters("l1l2message", (proofRes.l2ToL1Messages![0].payload) as string[]);
+            const messageFromProof = messageContent as L1L2message;
+            console.log({ messageFromProof });
 
-            console.log('Proof reçue :', data.proof);
             toaster.create({
-                description: "Sending data. Please wait...",
+                description: "Sending data. Please wait 30 sec...",
                 type: "info",
                 closable: true,
-                duration: 30_000,
+                duration: 50_000,
             });
-            // → Construis ta tx Starknet avec data.proof (ex. calldata avec proof_span + publics)
+            toaster.create({
+                description: "Not yet coded 😱. Soon!!!",
+                type: "error",
+                closable: true,
+                duration: 60_000,
+            });
+            // ************************************************
+            // Send on-line tx of verif/action
             // await account.execute(...)
+            // ************************************************
         } catch (err) {
             console.error(err);
             toaster.create({

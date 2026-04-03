@@ -16,7 +16,6 @@ export default async function Home() {
           src={voteImg}
           alt="Voty logo"
           width={150}
-          height={150}
         />
         <Center fontSize="3xl" fontWeight="800" textAlign={"center"}>
           Secured vote using Starknet ZK technology

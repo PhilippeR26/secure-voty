@@ -3,10 +3,13 @@ import { create } from "zustand";
 interface ChoiceState {
     choice: number | undefined,
     setChoice: (choice: number) => void,
-        email: string | undefined,
+    email: string | undefined,
     setEmail: (email: string) => void,
-    emailOK: boolean,
-    setEmailOK: (emailOK: boolean) => void,
+    secret: string | undefined,
+    setSecret: (secret: string) => void,
+    userAuthorized: boolean,
+    setUserAuthorized: (userAuthorized: boolean) => void,
+
 }
 
 export const useStoreChoice = create<ChoiceState>()(set => ({
@@ -14,6 +17,8 @@ export const useStoreChoice = create<ChoiceState>()(set => ({
     setChoice: (choice: number) => { set(() => ({ choice })) },
     email: undefined,
     setEmail: (email: string) => { set(() => ({ email })) },
-    emailOK: false,
-    setEmailOK: (emailOK: boolean) => { set(() => ({ emailOK })) },
+    secret: undefined,
+    setSecret: (secret: string) => { set(() => ({ secret })) },
+    userAuthorized: false,
+    setUserAuthorized: (userAuthorized: boolean) => { set(() => ({ userAuthorized })) },
 }));

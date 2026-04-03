@@ -18,7 +18,9 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "starknet": "^9.3.0",
-    "starknet-merkle-tree": "^1.1.1"
+    "starknet": "github:PhilippeR26/starknet.js#buildExecute",
+    "starknet-devnet": "^0.7.2",
+    "starknet-merkle-tree": "^1.1.1",
+    "@starknet-io/starknet-types-0101": "npm:@starknet-io/types-js@0.10.1"
   }
 }
