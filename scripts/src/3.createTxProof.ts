@@ -135,8 +135,8 @@ async function main() {
     public_input,
     private_input
   });
-  // **** ⚠️⚠️⚠️ BuildExecute only from https://github.com/PhilippeR26/starknet.js/tree/buildExecute branch
-  const tx = await account0.buildExecute(myCalldata);
+  // **** ⚠️⚠️⚠️ getSignedTransaction only from https://github.com/PhilippeR26/starknet.js/tree/buildExecute branch
+  const tx = await account0.getSignedTransaction(myCalldata);
   console.log(tx);
   fs.writeFileSync('./output/txVote.json', JSON.stringify(tx, undefined, 2));
   console.log("prices=", await myProvider.getGasPrices());

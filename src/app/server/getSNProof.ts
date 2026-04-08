@@ -24,8 +24,8 @@ export async function getSNProof(publicData: PublicInputsForProof, privateData: 
         public_input: publicData,
         private_input: privateData,
     });
-    // **** ⚠️⚠️⚠️ BuildExecute is only available from https://github.com/PhilippeR26/starknet.js/tree/buildExecute branch
-    const tx: INVOKE_TXN_V3 = await account0.buildExecute(myCalldata);
+    // **** ⚠️⚠️⚠️ getSignedTransaction is only available from https://github.com/PhilippeR26/starknet.js/tree/buildExecute branch
+    const tx: INVOKE_TXN_V3 = await account0.getSignedTransaction(myCalldata);
     console.log("virtual transaction =", tx);
     // const tx: INVOKE_TXN_V3 = {
     //     type: 'INVOKE',

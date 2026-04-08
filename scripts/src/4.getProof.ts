@@ -159,8 +159,8 @@ async function main() {
   //         max_price_per_unit: 50,
   //     },
   // });
-  // **** ⚠️⚠️⚠️ BuildExecute is only available from https://github.com/PhilippeR26/starknet.js/tree/buildExecute branch
-  const tx: INVOKE_TXN_V3 = await account0.buildExecute(myCalldata);
+  // **** ⚠️⚠️⚠️ getSignedTransaction is only available from https://github.com/PhilippeR26/starknet.js/tree/buildExecute branch
+  const tx: INVOKE_TXN_V3 = await account0.getSignedTransaction(myCalldata);
   console.log(tx);
   const currentBlock: number = await myProvider.getBlockNumber();
 

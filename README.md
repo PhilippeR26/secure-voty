@@ -179,7 +179,7 @@ struct PrivateInputsForProof {
 The transaction is built using a special fork of starknet.js. See the implementation in [this script](./scripts/src/3.createTxProof.ts):
 
 ```ts
-const tx = await myAccount.buildExecute(myCalldata);
+const tx = await myAccount.getSignedTransaction(myCalldata);
 ```
 
 The result is:
