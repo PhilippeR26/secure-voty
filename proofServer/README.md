@@ -5,7 +5,7 @@
 - About 10 Gb of storage.
 - More powerful is your PC, faster is the proof calculation (40s on my PC)
 - Rust: stable (for workspace crates) + `nightly-2025-07-14` (for stwo prover).
-- Starknet RPC node — for state reads before proving.
+- Starknet RPC node — for state reads before proving. For Pathfinder, v0.22.2 minimum.
 
 ## Configuration 
 Copy .env.example to .env, and adapt the content to your case.
@@ -27,7 +27,7 @@ On client side :
 Define
 - `currentBlock`:  the block that will be the basis for the virtual transaction
 - tx: a signed transaction that execute the function to prove.
-  Example of transaction (type `INVOKE_TXN_V3` of `npm:@starknet-io/types-js@0.10.1"`):
+  Example of transaction (type `INVOKE_TXN_V3` of `npm:@starknet-io/types-js@0.10.2"`):
   ```json
   {
   "type": "INVOKE",

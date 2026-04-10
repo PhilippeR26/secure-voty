@@ -1,4 +1,4 @@
-"use server";
+"use client";
 
 import Image from "next/image";
 import voteImg from "@/app/images/vote.png";
@@ -8,7 +8,7 @@ import Subject from "./components/Subject";
 import Choices from "./components/Choices";
 import Email from "./components/Email";
 
-export default async function Home() {
+export default function Home() {
   return (
     <>
       <VStack>

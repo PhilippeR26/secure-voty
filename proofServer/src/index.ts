@@ -9,7 +9,7 @@ const app = express();
 app.use(express.json());
 app.use(proveRouter);
 
-const port = Number(process.env.PORT ?? 3001);
+const port = Number(process.env.PORT ?? 3030);
 app.listen(port, () => {
   console.log(`🚀 snip36-server listening on http://localhost:${port}`);
 });

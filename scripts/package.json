@@ -15,12 +15,12 @@
     "@types/node": "^25.3.0",
     "jest": "^30.2.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   },
   "dependencies": {
     "starknet": "github:PhilippeR26/starknet.js#buildExecute",
     "starknet-devnet": "^0.7.2",
     "starknet-merkle-tree": "^1.1.1",
-    "@starknet-io/starknet-types-0101": "npm:@starknet-io/types-js@0.10.1"
+    "@starknet-io/starknet-types-0102": "npm:@starknet-io/types-js@0.10.2"
   }
 }

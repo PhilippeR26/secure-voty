@@ -44,9 +44,9 @@ export async function checkSecret(emailEncoded: string, proposedSecret: string, 
     }
     const secret = (secretTable as Record<string, string>)[emailEncoded];
     if (BigInt(secret) !== BigInt(proposedSecret)) {
-        return false
+        return false;
     }
-    return true
+    return true;
 }
 
 export async function getRoot(): Promise<string> {

@@ -1,8 +1,7 @@
-// handle vote (proof part)
-// Coded with Cairo 2.16.0
+// Handle vote
+// Coded with Cairo 2.17.0-rc.4
 // contract not audited ; use at your own risks.
 
-use core::boolean;
 use starknet::{ContractAddress, EthAddress};
 
 // a L2->L1 message (for communication between proof & verification)
@@ -46,6 +45,7 @@ pub trait IMerkleVerify<TContractState> {
         public_input: PublicInputsForProof,
         private_input: PrivateInputsForProof,
     );
+    fn verify_vote(ref self: TContractState, public_message: L1L2message);
 
     fn get_tally(self: @TContractState, round: u32) -> Array<u256>;
     fn get_merkle_root(self: @TContractState) -> felt252;
@@ -55,20 +55,22 @@ pub trait IMerkleVerify<TContractState> {
 
     fn open_round(ref self: TContractState, round: u32, vote_size: u8);
     fn close_round(ref self: TContractState, round: u32);
-    fn is_round_open(self: @TContractState,round:u32)->bool;
+    fn is_round_open(self: @TContractState, round: u32) -> bool;
 }
 
 #[starknet::contract]
 mod PrivateVoteVerifierMultiRound {
-    use core::boolean;
-use core::array::ArrayTrait;
+    use core::array::ArrayTrait;
     use core::poseidon::poseidon_hash_span;
     use core::traits::Into;
     use starknet::storage::{
         Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
         StoragePointerWriteAccess,
     };
-    use starknet::{ContractAddress, SyscallResultTrait, get_caller_address, get_tx_info, syscalls};
+    use starknet::{
+        ContractAddress, SyscallResultTrait, get_caller_address, get_contract_address, get_tx_info,
+        syscalls,
+    };
     use crate::{L1L2message, PrivateInputsForProof, ProofMessage, PublicInputsForProof};
 
     // recovered data from proof_facts of the transaction
@@ -218,6 +220,35 @@ use core::array::ArrayTrait;
             syscalls::send_message_to_l1_syscall(0x00, ser.span()).unwrap_syscall();
         }
 
+        fn verify_vote(ref self: ContractState, public_message: L1L2message) {
+            assert(
+                public_message.vote < self.vote_size.read(public_message.round),
+                'Invalid vote value',
+            );
+
+            let nullifier_key = (public_message.round, public_message.nullifier);
+            assert(!self.used_nullifiers.read(nullifier_key), 'Nullifier used');
+
+            // ******** SNIP-36 verification of public message
+            let proof_facts = _get_proof_messages_hashes();
+            let mut ser: Array<felt252> = ArrayTrait::new();
+            public_message.serialize(ref ser);
+            let message = ProofMessage {
+                from_address: get_contract_address(), // ensure that the proof has been created by this contract
+                payload: ser.span(),
+                to_address: 0x00_felt252.try_into().unwrap(),
+            };
+            let calculated_message_H = _compute_message_hash_for_proof_facts(@message);
+            assert(calculated_message_H == *proof_facts.at(0), 'pub message not related to hash');
+            // ******** Verifications made ; record the vote
+            self.used_nullifiers.write(nullifier_key, true);
+            let tally_key = (public_message.round, public_message.vote);
+            let current = self.tally.read(tally_key);
+            self.tally.write(tally_key, current + 1);
+            self.emit(VoteAdded { round: public_message.round, vote: public_message.vote });
+        }
+
+
         fn get_tally(self: @ContractState, round: u32) -> Array<u256> {
             let mut res = array![];
             for i in 0..(self.vote_size.read(round)) {
@@ -257,9 +288,8 @@ use core::array::ArrayTrait;
             self.emit(RoundClosed { round });
         }
 
-            fn is_round_open(self: @ContractState,round:u32)->bool {
-                self.vote_is_open.read(round)
-            }
-
+        fn is_round_open(self: @ContractState, round: u32) -> bool {
+            self.vote_is_open.read(round)
+        }
     }
 }

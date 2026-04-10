@@ -2,18 +2,23 @@
 
 import { Box, Button, Center, RadioGroup, VStack } from "@chakra-ui/react";
 import { useStoreChoice } from "./contextChoice";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Toaster, toaster } from "@/components/ui/toaster"
 import { checkWhitelist, getRoot } from "../server/voterProofs";
 import { CairoBytes31, CallData, hash, num } from "starknet";
 import type { L1L2message, PrivateInputsForProof, ProveResult, PublicInputsForProof } from "../types";
 import { getSNProof } from "../server/getSNProof";
 import { l1l2MessageAbi } from "../const/l1l2MessageAbi";
+import { sendVote } from "../server/sendVote";
+import { round } from "../constants";
+import Results from "./Results";
 
 
 export default function Choices() {
     const [value, setValue] = useState<string | null>(null);
+    const [success, setSuccess] = useState<boolean>(false);
     const { choice, setChoice, userAuthorized: emailOK, email, secret } = useStoreChoice();
+    const initialized = useRef(false);
 
     const items = [
         { value: "1", label: "For sure 🕶️" },
@@ -22,8 +27,10 @@ export default function Choices() {
         { value: "0", label: "Blank vote" },
     ]
 
-
+    
     async function handleVote() {
+        if (initialized.current) return;
+            initialized.current = true;
         if (!value) return;
         console.log("Vote for :", value);
         setChoice(Number(value));
@@ -36,7 +43,6 @@ export default function Choices() {
         // call backend to generate the proof
         const merkleRoot = await getRoot();
         const vote = value;
-        const round = 0;
         // const nullifier = hash.computePoseidonHashOnElements([secret, round]);
         const proof = await checkWhitelist(new CairoBytes31(email).toHexString(), process.env.NEXT_PUBLIC_API_KEY!);
         const memberLeaf = proof.leafHash;
@@ -54,29 +60,51 @@ export default function Choices() {
 
         try {
             const proofRes: ProveResult = await getSNProof(public_input, private_input, process.env.NEXT_PUBLIC_API_KEY!);
+            console.log("Choice1: proof size =", proofRes.proof.length, ", start =", proofRes.proof.slice(0, 8), ", end =", proofRes.proof.slice(-8));
+            if (proofRes.proof.length === 0) {
+                toaster.create({
+                    description: "Vote not authorized 😱 !!!",
+                    type: "error",
+                    closable: true,
+                    duration: undefined,
+                });
+            } else {
 
+                const messageCallData = new CallData(l1l2MessageAbi);
+                const messageContent = messageCallData.decodeParameters("l1l2message", (proofRes.l2ToL1Messages![0].payload) as string[]);
+                const messageFromProof = messageContent as L1L2message;
+                console.log({ messageFromProof });
 
-            const messageCallData = new CallData(l1l2MessageAbi);
-            const messageContent = messageCallData.decodeParameters("l1l2message", (proofRes.l2ToL1Messages![0].payload) as string[]);
-            const messageFromProof = messageContent as L1L2message;
-            console.log({ messageFromProof });
+                toaster.create({
+                    description: "Sending data. Please wait 30 sec...",
+                    type: "info",
+                    closable: true,
+                    duration: 50_000,
+                });
 
-            toaster.create({
-                description: "Sending data. Please wait 30 sec...",
-                type: "info",
-                closable: true,
-                duration: 50_000,
-            });
-            toaster.create({
-                description: "Not yet coded 😱. Soon!!!",
-                type: "error",
-                closable: true,
-                duration: 60_000,
-            });
-            // ************************************************
-            // Send on-line tx of verif/action
-            // await account.execute(...)
-            // ************************************************
+                // ************************************************
+                // Send on-line tx of verif/action
+                const txR2 = await sendVote(proofRes, messageFromProof, process.env.NEXT_PUBLIC_API_KEY!);
+                console.log(txR2);
+                if (txR2!== "failed") {
+                    setSuccess(true);
+                    toaster.create({
+                        description: "Vote successfully registered!!!",
+                        type: "info",
+                        closable: true,
+                        duration: undefined,
+                    });
+                } else {
+                    toaster.create({
+                        description: "Vote failed 😱 !!!",
+                        type: "error",
+                        closable: true,
+                        duration: undefined,
+                    });
+
+                }
+                // ************************************************
+            }
         } catch (err) {
             console.error(err);
             toaster.create({
@@ -133,9 +161,12 @@ export default function Choices() {
                             bg={"lightsteelblue"}
                             fontSize={"xl"} fontWeight="700"
                         >
-                            You voted for: {items.find((item) => item.value === String(choice))?.label}
+                            You selected: {items.find((item) => item.value === String(choice))?.label}
                         </Box>
                     )}
+                    {success && <>
+                        <Results></Results>
+                    </>}
                 </>
             }
         </>

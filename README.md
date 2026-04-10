@@ -24,7 +24,8 @@ In this demo, both servers run locally:
 - The more powerful your PC, the faster the proof generation.
 - Rust: stable (for workspace crates) + `nightly-2025-07-14` (for the s-two prover).
 - Python 3.
-- A Starknet RPC node — required for state reads before proof generation.
+- A Starknet RPC node — required for state reads before proof generation. For Pathfinder, v0.22.2 minimum.
+- Your contract has to be compiled with Cairo 2.17.0-rc.4 minimum. 
 
 ## Servers
 
@@ -67,7 +68,7 @@ npm run start
 
 The first launch will download, install, and compile approximately 10 GB of Starknet-related code. This process takes about 20 minutes (on my machine).
 
-The server runs locally on port 3030 and uses roughly 2 GB of RAM at this stage.
+The server runs locally on port 3030.
 
 ## Frontend (Next.js)
 
@@ -82,6 +83,7 @@ Open http://localhost:3000
 Make sure you have about 15 GB of RAM available.
 
 **You can test the demo using the email address `you@outlook.com` and the user secret `12345678`.**
+In `src/app/constants.ts` , select a round number not yet used (for example a large random number).
 
 ## Concept of Usage
 
@@ -94,9 +96,6 @@ Here’s how these powerful proofs work:
    - the proof facts
    - any L2→L1 messages
 4. Declare and deploy a contract capable of verifying the proof and executing authorized actions (this can be the same contract as in step 1, but with separate proof/verification functions).
-
-> [!WARNING]
-> At the time of writing, such contracts cannot yet be declared on Testnet. This should be resolved soon.
 
 5. Call the verification function **on-chain**, passing the proof, the proof facts, and the content of the L2→L1 messages as calldata parameters.
 6. If the proof corresponds to a reverted virtual transaction, the on-chain transaction will fail. If the proof facts are inconsistent with the calldata, the transaction will also revert. Once these checks pass, the contract can safely execute the authorized actions.
@@ -146,7 +145,7 @@ secret: felt252,                // private secret unique to each voter
 
 These private values are related to the user and must never be sent to the public Starknet network along with the vote.
 
-The contract code is available [here](./cairoContract/voty/src/libFull.cairo). See the `create_proof()` function.
+The contract code is available [here](./cairoContract/voty/src/lib.cairo). See the `create_proof()` function.
 
 ### 2. Build a Transaction
 
@@ -316,9 +315,6 @@ fn _compute_message_hash_for_proof_facts(pf: @ProofMessage) -> felt252 {
     poseidon_hash_span(data.span())
 }
 ```
-
-> [!CAUTION]
-> At the time of writing, you cannot yet declare a contract that uses `get_execution_info_v3_syscall()`. This limitation should be lifted soon.
 
 Here is an example of the verification logic:
 

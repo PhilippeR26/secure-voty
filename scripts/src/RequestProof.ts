@@ -1,6 +1,6 @@
 // send a virtual transaction to a execute/proof server
 
-import type { INVOKE_TXN_V3 } from "@starknet-io/starknet-types-0101";
+import type { INVOKE_TXN_V3 } from "@starknet-io/starknet-types-0102";
 import type { BigNumberish } from "starknet";
 
 export type ProofMessage = {
@@ -13,6 +13,12 @@ export type ProveResult = {
     proof: string;
     proofFacts: BigNumberish[];
     l2ToL1Messages?: ProofMessage[];
+}
+
+export type L1L2message = {
+    round: BigNumberish,
+    nullifier: BigNumberish,
+    vote: BigNumberish,
 }
 
 export async function requestProof(currentBlock: number, tx: INVOKE_TXN_V3): Promise<ProveResult> {

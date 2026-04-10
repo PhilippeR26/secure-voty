@@ -1,9 +1,9 @@
 {
   "type": "INVOKE",
-  "sender_address": "0x0304c822792da45bf6f8e6957aa9515bd7b365f05b5c1678f61ae0c46213251c",
+  "sender_address": "0x04761f1bf6b5f11f6b5beb2fd862a468e4d7666f674ac544e2a502e4d8483747",
   "calldata": [
     "0x1",
-    "0x62751c14ff5d186f1ec837c7c45345fe555b8eba5e89c641bcb429d748f8f6a",
+    "0x5f21a69bf7c0b01ce231c12b459c926a42243f6846f8272ec2e67ccc2551b68",
     "0x1ebfe9bbcb97616537f1b99138aa084dcca02847d532d6c382752811a326f3",
     "0x7",
     "0x1",
@@ -15,22 +15,22 @@
     "0xbc614e"
   ],
   "signature": [
-    "0x277071b69181197495d7127842c5c65b790330b6ae1f8fae1d72e981a21cf64",
-    "0x54bbf9d33bfe8b3cc758fcdcb9f2c678b31b5589cb49b2681064142488a8f4a"
+    "0x366b11bce1c24e2b211b6a51cf8471d7622e3e4e06062ddf3ce9a702435f7d7",
+    "0x5e9b7d91cc11a256868cde4757854b9bcc26e520d5cb595b66b1973332acd27"
   ],
-  "nonce": "0x1c9",
+  "nonce": "0xa",
   "resource_bounds": {
     "l2_gas": {
-      "max_amount": "0x1ef0e4",
+      "max_amount": "0x170e14",
       "max_price_per_unit": "0x2cb417800"
     },
     "l1_gas": {
       "max_amount": "0xacfe",
-      "max_price_per_unit": "0x58163b9c0bdf"
+      "max_price_per_unit": "0x1b77735d4e370"
     },
     "l1_data_gas": {
       "max_amount": "0xc0",
-      "max_price_per_unit": "0x943294cf8"
+      "max_price_per_unit": "0x2d9b91cdf57"
     }
   },
   "tip": "0x5f5e100",

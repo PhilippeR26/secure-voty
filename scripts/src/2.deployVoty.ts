@@ -1,7 +1,7 @@
 // Declare & deploy a contract.
 // Uses of standard deployer
 // Launch with npx ts-node ./src/2.deployVoty.ts
-// Coded with Starknet.js v10.0.0 & devnet v0.4.2
+// Coded with Starknet.js v10.0.0 & Pathfinder v0.22.0
 
 import { RpcProvider, Account, Contract, json, CallData, config, type CairoAssembly, type CompiledSierra, CairoBytes31, extractContractHashes } from "starknet";
 import { account1BraavosSepoliaAddress, account1BraavosSepoliaPrivateKey, accountSTRKoz20snip9Address, accountSTRKoz20snip9PrivateKey, alchemyKey } from "./secretNetwork";
@@ -128,11 +128,9 @@ async function main() {
   console.log(deployResponse);
 
   // ******* Testnet braavos
-  // txH = 0x18a82f6b22ff3dad1911416ddf6f731efa83e203df7fa9be719e6f4a6e07fdd
-  // address = 0x62751c14ff5d186f1ec837c7c45345fe555b8eba5e89c641bcb429d748f8f6a
-  // block = 8127827
-
-
+  // ClassH = 0x1f49ee8d0ab5b280303187f65e1fa62c197c451d6b442db2b0572309eed46df
+  // address = 0x5f21a69bf7c0b01ce231c12b459c926a42243f6846f8272ec2e67ccc2551b68
+  
   // Connect the new contract instance :
   const myTestContract = new Contract({ abi: compiledSierra.abi, address: deployResponse.contract_address });
   // const myTestContract = new Contract({ abi: compiledSierra.abi, address });

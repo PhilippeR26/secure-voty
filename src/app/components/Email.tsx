@@ -24,7 +24,6 @@ export default function Email() {
   async function onSubmitResponse(values: FormValues) {
     setIsWhiteListed(false);
     setUserAuthorized(false)
-    console.log({ API: process.env.NEXT_PUBLIC_API_KEY! })
     const proof = await checkWhitelist(new CairoBytes31(values.emailValue).toHexString(), process.env.NEXT_PUBLIC_API_KEY!);
     const secretIsValid = await checkSecret(new CairoBytes31(values.emailValue).toHexString(), values.secretValue.toString(), process.env.NEXT_PUBLIC_API_KEY!);
 

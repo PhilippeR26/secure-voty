@@ -1,9 +1,9 @@
-// Create a virtual transaction in Integration Sepolia
+// Ask a proof.
 // Launch with npx ts-node ./src/4.getProof.ts
-// Coded with Starknet.js v10.0.0 (experimental branch buildExecute) & devnet v0.4.2
+// Coded with Starknet.js v10.0.0 (experimental branch buildExecute) & Pathfinder v0.22.0
 
 import { RpcProvider, Account, Contract, json, num, hash, type CompiledSierra, CairoBytes31, type BigNumberish, CallData, config } from "starknet";
-import { INVOKE_TXN_V3 } from "@starknet-io/starknet-types-0101";
+import { INVOKE_TXN_V3 } from "@starknet-io/starknet-types-0102";
 // import { account1BraavosSepoliaAddress, account1BraavosSepoliaPrivateKey, junoNMtestnet } from "../A1priv/A1priv";
 // import { account1BraavosMainnetAddress, account1BraavosMainnetPrivateKey, alchemyKey, infuraKey } from "../A-MainPriv/mainPriv";
 import { DevnetProvider } from "starknet-devnet";
@@ -13,7 +13,7 @@ import fs from "fs";
 import * as dotenv from "dotenv";
 import { account1BraavosSepoliaAddress, account1BraavosSepoliaPrivateKey, account3ArgentXSepoliaAddress, account3ArgentXSepoliaPrivateKey, accountSTRKoz20snip9Address, accountSTRKoz20snip9PrivateKey, alchemyKey } from "./secretNetwork";
 import { l1l2MessageAbi } from "./l1l2MessageAbi";
-import { requestProof, type ProveResult } from "./RequestProof";
+import { requestProof, type L1L2message, type ProveResult } from "./RequestProof";
 
 dotenv.config({ quiet: true });
 
@@ -61,12 +61,12 @@ async function main() {
   // const accountAddress0 = devnetAccounts[0].address;
   // const privateKey0 = devnetAccounts[0].private_key;
   // **** Sepolia
-    const accountAddress0 = account1BraavosSepoliaAddress;
-    const privateKey0 = account1BraavosSepoliaPrivateKey;
+  // const accountAddress0 = account1BraavosSepoliaAddress;
+  // const privateKey0 = account1BraavosSepoliaPrivateKey;
   // const accountAddress0 = account3ArgentXSepoliaAddress;
   // const privateKey0 = account3ArgentXSepoliaPrivateKey;
-  // const accountAddress0 = accountSTRKoz20snip9Address;
-  // const privateKey0 = accountSTRKoz20snip9PrivateKey;
+  const accountAddress0 = accountSTRKoz20snip9Address;
+  const privateKey0 = accountSTRKoz20snip9PrivateKey;
   // **** SN0.14.2 Integration Sepolia
   // const accountAddress0 = accountIntegrationAdrienAddress;
   // const privateKey0 = accountIntegrationAdrienPrivateKey;
@@ -80,29 +80,30 @@ async function main() {
   );
   console.log("Account connected.\n");
 
-
+  
   // main
-   const votyContractAddress = "0x62751c14ff5d186f1ec837c7c45345fe555b8eba5e89c641bcb429d748f8f6a"; // Braavos
-  // const votyContractAddress = "0x1627b4b67b7a692944e886643e403fb14c5435ddecb7c2ddacebf4e85587ebe"; // OZ
+   // const votyProofContractAddress = "0x1627b4b67b7a692944e886643e403fb14c5435ddecb7c2ddacebf4e85587ebe"; // OZ account - proof
+  const votyProofContractAddress = "0x5f21a69bf7c0b01ce231c12b459c926a42243f6846f8272ec2e67ccc2551b68"; // OZ account - proof + verify
   // const sierra = await myProvider.getClassAt(productContractAddress);
   const votySierra = json.parse(fs.readFileSync("../cairoContract/voty/target/release/secure_voty_PrivateVoteVerifierMultiRound.contract_class.json").toString("ascii")) as CompiledSierra;
-  const votyContract = new Contract({
+  const votyProofContract = new Contract({
     abi: votySierra.abi,
-    address: votyContractAddress,
+    address: votyProofContractAddress,
     providerOrAccount: account0,
   });
-  console.log("functions =", votyContract.functions);
+  console.log("functions =", votyProofContract.functions);
   console.log("constructor =", votySierra.abi.find((item) => item.type == "constructor"));
 
   const myNonce = BigInt(await account0.getNonce());
   console.log("nonce =", num.toHex(myNonce));
 
-  console.log("owner addr =", num.toHex(await votyContract.get_owner()));
+  console.log("owner addr =", num.toHex(await votyProofContract.get_owner()));
   // ****** to uncomment only if vote is not yet opened *******
-  // const tx0 = await votyContract.open_round(0, 4);// round, vote_size
   // console.log("Vote opening...");
+  // const tx0 = await votyContract.open_round(0, 4);// round, vote_size
   // await myProvider.waitForTransaction(tx0.transaction_hash);
   // **********************************************************
+
   // --- Build calldata for the proof
   type PublicInputsForProof = {
     vote: BigNumberish,
@@ -141,7 +142,7 @@ async function main() {
     merkle_proof: proof,
     secret
   };
-  const myCalldata = votyContract.populate("create_proof", {
+  const myCalldata = votyProofContract.populate("create_proof", {
     public_input,
     private_input
   });
@@ -166,38 +167,17 @@ async function main() {
 
   fs.writeFileSync('./output/txVote.json', JSON.stringify(tx, undefined, 2));
   console.log(tx);
-  // process.exit(7);
 
   // ------- ask to server to execute virtually the tx and to generate the proof
   const proofRes: ProveResult = await requestProof(currentBlock, tx);
   console.log("proof size =", proofRes.proof.length, ", start =", proofRes.proof.slice(0, 8), ", end =", proofRes.proof.slice(-8));
 
-type L1L2message = {
-  round: BigNumberish,
-  nullifier: BigNumberish,
-  vote: BigNumberish,
-}
-const messageCallData = new CallData(l1l2MessageAbi);
-const messageContent = messageCallData.decodeParameters("l1l2message", (proofRes.l2ToL1Messages![0].payload) as string[]);
-const messageFromProof = messageContent as L1L2message;
+    const messageCallData = new CallData(l1l2MessageAbi);
+  const messageContent = messageCallData.decodeParameters("l1l2message", (proofRes.l2ToL1Messages![0].payload) as string[]);
+  const messageFromProof = messageContent as L1L2message;
   console.log({ messageFromProof });
+  fs.writeFileSync('./output/proofData.json', json.stringify({ proofRes, messageFromProof }, undefined, 2));
 
-  // ------- Execute a tx onchain using the proof
-  // *** as it's impossible today to declare a verification contract that includes `get_execution_info_v3_syscall`, we use here a random write function of the proof contract.
-  const myCalldata2 = votyContract.populate("open_round", {
-    round: 0,
-    vote_size: 4
-  });
-  // ****** To test without proof
-  // console.log("Test1...");
-  // const res1 = await account0.execute(myCalldata2);
-  // const txR1 = await account0.provider.waitForTransaction(res1.transaction_hash);
-
-  console.log("Test2...");
-  // Today, this function generated an error 55 : 'Account: invalid signature'. Starknet is not calculating properly the txHash (not using proof_facts)
-  // const res2 = await account0.execute(myCalldata2, { proof: proofRes.proof, proofFacts: proofRes.proofFacts });
-  // const txR2 = await account0.provider.waitForTransaction(res2.transaction_hash);
-  // console.log(txR2);
 
   console.log("✅ Test performed.");
 }
