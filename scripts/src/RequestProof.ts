@@ -16,9 +16,9 @@ export type ProveResult = {
 }
 
 export type L1L2message = {
-    round: BigNumberish,
-    nullifier: BigNumberish,
-    vote: BigNumberish,
+    round: BigNumberish;
+    nullifier: BigNumberish;
+    vote: BigNumberish;
 }
 
 export async function requestProof(currentBlock: number, tx: INVOKE_TXN_V3): Promise<ProveResult> {

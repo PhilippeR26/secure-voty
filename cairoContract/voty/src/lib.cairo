@@ -1,6 +1,5 @@
 // Handle vote
-// Coded with Cairo 2.17.0-rc.4
-// contract not audited ; use at your own risks.
+// Coded with Cairo 2.17.0
 
 use starknet::{ContractAddress, EthAddress};
 

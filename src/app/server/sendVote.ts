@@ -1,15 +1,13 @@
 "use server";
 
-import { Account, Contract, RpcProvider, type Abi, type GetTransactionReceiptResponse } from "starknet";
-import type { L1L2message, PrivateInputsForProof, ProveResult, PublicInputsForProof } from "../types";
-import { requestProof } from "./RequestProof";
+import { Account, Contract, RpcProvider, type Abi } from "starknet";
+import type { L1L2message, ProveResult } from "../types";
+import { verifySession } from "./session";
 import { votyContractAddress } from "../constants";
 
 
-export async function sendVote(proofRes: ProveResult, messageFromProof: L1L2message, proposedApiKey: string): Promise<string> {
-    if (BigInt(proposedApiKey) !== BigInt(process.env.API_KEY!)) {
-        throw new Error("Wrong API key");
-    }
+export async function sendVote(proofRes: ProveResult, messageFromProof: L1L2message): Promise<string> {
+    await verifySession();
     console.log("sendVote: with message ", messageFromProof, " and proof :", "proof size =", proofRes.proof.length, ", start =", proofRes.proof.slice(0, 8), ", end =", proofRes.proof.slice(-8));
     const myProvider = new RpcProvider({ nodeUrl: process.env.STARKNET_RPC_URL! });
     const abi: Abi = (await myProvider.getClassAt(votyContractAddress)).abi;

@@ -4,16 +4,16 @@ import { useForm } from "react-hook-form";
 import { useStoreChoice } from "./contextChoice";
 import { Button, Center, Field, Input, Text } from "@chakra-ui/react";
 import { useState } from "react";
-import { checkSecret, checkWhitelist } from "../server/voterProofs";
-import { CairoBytes31 } from "starknet";
+import { authenticate } from "../server/authenticate";
 
 interface FormValues {
   emailValue: string,
-  secretValue: number,
+  secretValue: string,
 }
 export default function Email() {
   const [isWhiteListed, setIsWhiteListed] = useState<boolean | null>(null);
-  const { email, setEmail, userAuthorized, setUserAuthorized, setSecret } = useStoreChoice();
+  const [secretValid, setSecretValid] = useState<boolean | null>(null);
+  const { email, setEmail, userAuthorized, setUserAuthorized } = useStoreChoice();
 
   const {
     handleSubmit,
@@ -22,19 +22,17 @@ export default function Email() {
   } = useForm<FormValues>();
 
   async function onSubmitResponse(values: FormValues) {
-    setIsWhiteListed(false);
-    setUserAuthorized(false)
-    const proof = await checkWhitelist(new CairoBytes31(values.emailValue).toHexString(), process.env.NEXT_PUBLIC_API_KEY!);
-    const secretIsValid = await checkSecret(new CairoBytes31(values.emailValue).toHexString(), values.secretValue.toString(), process.env.NEXT_PUBLIC_API_KEY!);
+    setIsWhiteListed(null);
+    setSecretValid(null);
+    setUserAuthorized(false);
 
-    // if result is Error, the following code is not executed.
-    if (proof.isWhiteListed) {
-      setIsWhiteListed(true);
+    const result = await authenticate(values.emailValue, values.secretValue);
+
+    setIsWhiteListed(result.isWhiteListed);
+    setSecretValid(result.secretValid);
+    if (result.isWhiteListed && result.secretValid) {
       setEmail(values.emailValue);
-      if (secretIsValid) {
-        setSecret(values.secretValue.toString());
-        setUserAuthorized(true);
-      }
+      setUserAuthorized(true);
     }
   }
 
@@ -46,13 +44,13 @@ export default function Email() {
           <Center>
             <form onSubmit={handleSubmit(onSubmitResponse)}>
               <Field.Root invalid={!!errors.emailValue}>
-                <Field.Label htmlFor="encoded"> Your email to vote :</Field.Label>
+                <Field.Label htmlFor="emailInput"> Your email to vote :</Field.Label>
                 <Input
                   w="100%" minH={50} maxH={500}
                   bg="gray.800"
                   color="blue.200"
                   defaultValue={email}
-                  id="encoded"
+                  id="emailInput"
                   {...register("emailValue", {
                     required: "This is required. Ex: nom@site.com", pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
                   })}
@@ -63,13 +61,12 @@ export default function Email() {
                 </Field.ErrorText>
               </Field.Root>
               <Field.Root invalid={!!errors.secretValue} mt={3}>
-                <Field.Label htmlFor="encoded"> The 8 digit secret you received by email :</Field.Label>
+                <Field.Label htmlFor="secretInput"> The 8 digit secret you received by email :</Field.Label>
                 <Input
                   w="100%" minH={50} maxH={500}
                   bg="gray.800"
                   color="blue.200"
-                  defaultValue={email}
-                  id="encoded"
+                  id="secretInput"
                   {...register("secretValue", {
                     required: "This is required. Ex: 12345678",
                     pattern: {
@@ -95,7 +92,8 @@ export default function Email() {
             </form>
           </Center>
           <Center color="red" fontSize="lg">
-            {isWhiteListed !== null && (isWhiteListed === false ? "Sorry, you are not in the list of valid voters." : "Sorry, your secret is not valid.")}
+            {isWhiteListed === false && "Sorry, you are not in the list of valid voters."}
+            {isWhiteListed === true && secretValid === false && "Sorry, your secret is not valid."}
           </Center>
         </>
       ) : (
@@ -103,7 +101,6 @@ export default function Email() {
           Your email:
           <Text fontWeight={600}>
             {email}
-
           </Text>
         </Center>
       )}

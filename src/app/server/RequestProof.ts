@@ -1,19 +1,7 @@
 // send a virtual transaction to a execute/proof server
 
 import type { INVOKE_TXN_V3 } from "@starknet-io/starknet-types-0101";
-import type { BigNumberish } from "starknet";
-
-export type ProofMessage = {
-    from_address: BigNumberish;
-    payload: BigNumberish[];
-    to_address: BigNumberish;
-}
-
-export type ProveResult = {
-    proof: string;
-    proofFacts: BigNumberish[];
-    l2ToL1Messages?: ProofMessage[];
-}
+import type { ProveResult } from "../types";
 
 export async function requestProof(currentBlock: number, tx: INVOKE_TXN_V3): Promise<ProveResult> {
     const response = await fetch("http://localhost:3030/prove", {

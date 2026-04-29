@@ -6,10 +6,7 @@ import treeObj from "./merkleTree.json";
 import secretTable from "./secrets.json";
 
 
-export async function checkWhitelist(emailEncoded: string, proposedApiKey: string): Promise<ProofAnswer> {
-    if (BigInt(proposedApiKey) !== BigInt(process.env.API_KEY!)) {
-        throw new Error("Wrong API key");
-    }
+export async function checkWhitelist(emailEncoded: string): Promise<ProofAnswer> {
     const shortstring = BigInt(emailEncoded)
     const treeExt = treeObj as Merkle.StarknetMerkleTreeData
     const tree = Merkle.StarknetMerkleTree.load(treeExt);
@@ -38,10 +35,7 @@ export async function checkWhitelist(emailEncoded: string, proposedApiKey: strin
     }
 }
 
-export async function checkSecret(emailEncoded: string, proposedSecret: string, proposedApiKey: string): Promise<boolean> {
-    if (BigInt(proposedApiKey) !== BigInt(process.env.API_KEY!)) {
-        throw new Error("Wrong API key");
-    }
+export async function checkSecret(emailEncoded: string, proposedSecret: string): Promise<boolean> {
     const secret = (secretTable as Record<string, string>)[emailEncoded];
     if (BigInt(secret) !== BigInt(proposedSecret)) {
         return false;

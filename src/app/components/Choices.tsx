@@ -4,9 +4,8 @@ import { Box, Button, Center, RadioGroup, VStack } from "@chakra-ui/react";
 import { useStoreChoice } from "./contextChoice";
 import { useRef, useState } from "react";
 import { Toaster, toaster } from "@/components/ui/toaster"
-import { checkWhitelist, getRoot } from "../server/voterProofs";
-import { CairoBytes31, CallData, hash, num } from "starknet";
-import type { L1L2message, PrivateInputsForProof, ProveResult, PublicInputsForProof } from "../types";
+import { CallData } from "starknet";
+import type { L1L2message, ProveResult, PublicInputsForProof } from "../types";
 import { getSNProof } from "../server/getSNProof";
 import { l1l2MessageAbi } from "../const/l1l2MessageAbi";
 import { sendVote } from "../server/sendVote";
@@ -17,7 +16,7 @@ import Results from "./Results";
 export default function Choices() {
     const [value, setValue] = useState<string | null>(null);
     const [success, setSuccess] = useState<boolean>(false);
-    const { choice, setChoice, userAuthorized: emailOK, email, secret } = useStoreChoice();
+    const { choice, setChoice, userAuthorized: emailOK } = useStoreChoice();
     const initialized = useRef(false);
 
     const items = [
@@ -27,12 +26,10 @@ export default function Choices() {
         { value: "0", label: "Blank vote" },
     ]
 
-    
     async function handleVote() {
         if (initialized.current) return;
-            initialized.current = true;
+        initialized.current = true;
         if (!value) return;
-        console.log("Vote for :", value);
         setChoice(Number(value));
         toaster.create({
             description: "Data preparation. Please wait 40 sec...",
@@ -40,26 +37,11 @@ export default function Choices() {
             closable: true,
             duration: 50_000,
         });
-        // call backend to generate the proof
-        const merkleRoot = await getRoot();
-        const vote = value;
-        // const nullifier = hash.computePoseidonHashOnElements([secret, round]);
-        const proof = await checkWhitelist(new CairoBytes31(email).toHexString(), process.env.NEXT_PUBLIC_API_KEY!);
-        const memberLeaf = proof.leafHash;
-        const memberIndex = proof.index;
-        const merkleProof = proof.proof;
-        const public_input: PublicInputsForProof = {
-            vote,
-            round,
-        };
-        const private_input: PrivateInputsForProof = {
-            member_leaf: memberLeaf,
-            merkle_proof: merkleProof,
-            secret: secret!
-        };
+
+        const public_input: PublicInputsForProof = { vote: value, round };
 
         try {
-            const proofRes: ProveResult = await getSNProof(public_input, private_input, process.env.NEXT_PUBLIC_API_KEY!);
+            const proofRes: ProveResult = await getSNProof(public_input);
             console.log("Choice1: proof size =", proofRes.proof.length, ", start =", proofRes.proof.slice(0, 8), ", end =", proofRes.proof.slice(-8));
             if (proofRes.proof.length === 0) {
                 toaster.create({
@@ -69,11 +51,9 @@ export default function Choices() {
                     duration: undefined,
                 });
             } else {
-
                 const messageCallData = new CallData(l1l2MessageAbi);
                 const messageContent = messageCallData.decodeParameters("l1l2message", (proofRes.l2ToL1Messages![0].payload) as string[]);
                 const messageFromProof = messageContent as L1L2message;
-                console.log({ messageFromProof });
 
                 toaster.create({
                     description: "Sending data. Please wait 30 sec...",
@@ -82,11 +62,8 @@ export default function Choices() {
                     duration: 50_000,
                 });
 
-                // ************************************************
-                // Send on-line tx of verif/action
-                const txR2 = await sendVote(proofRes, messageFromProof, process.env.NEXT_PUBLIC_API_KEY!);
-                console.log(txR2);
-                if (txR2!== "failed") {
+                const txR2 = await sendVote(proofRes, messageFromProof);
+                if (txR2 !== "failed") {
                     setSuccess(true);
                     toaster.create({
                         description: "Vote successfully registered!!!",
@@ -101,9 +78,7 @@ export default function Choices() {
                         closable: true,
                         duration: undefined,
                     });
-
                 }
-                // ************************************************
             }
         } catch (err) {
             console.error(err);
@@ -164,9 +139,7 @@ export default function Choices() {
                             You selected: {items.find((item) => item.value === String(choice))?.label}
                         </Box>
                     )}
-                    {success && <>
-                        <Results></Results>
-                    </>}
+                    {success && <Results />}
                 </>
             }
         </>

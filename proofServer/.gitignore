@@ -2,6 +2,8 @@ node_modules/
 dist/
 output/
 .env
+.env.mainnet
+.env.testnet
 snip-36-prover-backend/
 deps/
 sequencer_venv/

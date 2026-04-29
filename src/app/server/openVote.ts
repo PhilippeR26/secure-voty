@@ -4,10 +4,7 @@ import { Account, Contract, RpcProvider, type Abi } from "starknet";
 import { roundSize, votyContractAddress } from "../constants";
 
 
-export async function openVote(roundChoice: number, proposedApiKey: string) {
-    if (BigInt(proposedApiKey) !== BigInt(process.env.API_KEY!)) {
-        throw new Error("Wrong API key");
-    }
+export async function openVote(roundChoice: number) {
     const myProvider = new RpcProvider({ nodeUrl: process.env.STARKNET_RPC_URL! });
     const abi: Abi = (await myProvider.getClassAt(votyContractAddress)).abi;
     const account0 = new Account({ address: process.env.STARKNET_ACCOUNT_ADDRESS!, provider: myProvider, signer: process.env.ACCOUNT_PRIVATE_KEY! });
