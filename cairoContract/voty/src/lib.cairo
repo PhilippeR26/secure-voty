@@ -192,6 +192,7 @@ mod PrivateVoteVerifierMultiRound {
     // ──────────────────────────────────────────────
     #[abi(embed_v0)]
     impl ProofVerifyContract of super::IMerkleVerify<ContractState> {
+        // to use only in virtual offline Starknet OS. If you use it in online Starknet network, you will send a message to L1, pay fees of the execution, and generating no proof.
         fn create_proof(
             self: @ContractState,
             public_input: PublicInputsForProof,
@@ -224,6 +225,7 @@ mod PrivateVoteVerifierMultiRound {
             syscalls::send_message_to_l1_syscall(0x00, ser.span()).unwrap_syscall();
         }
 
+        // to use in online Starknet network.
         fn verify_vote(ref self: ContractState, public_message: L1L2message) {
             assert(self.vote_is_open.read(public_message.round), 'Vote is not open');
             assert(
