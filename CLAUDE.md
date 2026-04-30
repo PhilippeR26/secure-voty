@@ -63,7 +63,6 @@ First launch downloads ~10 GB of Starknet code (≈20 min). Requires ~15 GB free
 ## Environment Setup
 
 Copy `.env-example` to `.env` at project root and fill in:
-- `NEXT_PUBLIC_API_KEY` / `API_KEY` — shared secret between frontend and server actions
 - `STARKNET_RPC_URL` — Pathfinder v0.22.2+ node required
 - `STARKNET_ACCOUNT_ADDRESS` / `ACCOUNT_PRIVATE_KEY` — Starknet account for submitting on-chain tx
 - `STARKNET_CHAIN_ID` — e.g. `SN_SEPOLIA`
@@ -92,8 +91,6 @@ User (browser)
 **SNIP-36 proof pattern**: The `create_proof()` function emits a L2→L1 message containing the public outputs `(round, nullifier, vote)`. The proof server captures this message. On verification, `verify_vote()` reads the message hash from `proof_facts` via `get_execution_info_v3_syscall()` and compares it against the calldata — ensuring the on-chain calldata matches what was proven.
 
 **Nullifier**: Computed as `poseidon([hash_of_members_V1, emailHex, round, secret])`. Prevents double-voting across rounds without revealing voter identity.
-
-**API key guard**: All Server Actions check `BigInt(proposedApiKey) !== BigInt(process.env.API_KEY!)` before proceeding. The key is sent from the client as `NEXT_PUBLIC_API_KEY`.
 
 ## Contract Interface (cairoContract/voty/src/lib.cairo)
 

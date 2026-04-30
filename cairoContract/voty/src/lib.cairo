@@ -284,6 +284,7 @@ mod PrivateVoteVerifierMultiRound {
 
         fn close_round(ref self: ContractState, round: u32) {
             assert(get_caller_address() == self.owner.read(), 'Only owner');
+            self.vote_is_open.write(round, false);
             self.emit(RoundClosed { round });
         }
 
