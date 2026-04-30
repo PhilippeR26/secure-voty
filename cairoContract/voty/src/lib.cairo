@@ -107,6 +107,7 @@ mod PrivateVoteVerifierMultiRound {
         VoteAdded: VoteAdded,
         RoundOpened: RoundOpened,
         RoundClosed: RoundClosed,
+        MerkleRootUpdated: MerkleRootUpdated,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -128,6 +129,11 @@ mod PrivateVoteVerifierMultiRound {
     struct RoundClosed {
         #[key]
         round: u32,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct MerkleRootUpdated {
+        new_root: felt252,
     }
 
     // ──────────────────────────────────────────────
@@ -193,8 +199,7 @@ mod PrivateVoteVerifierMultiRound {
         ) {
             assert(self.vote_is_open.read(public_input.round), 'Vote is not open');
             assert(
-                public_input.vote >= 0_u8
-                    && public_input.vote < self.vote_size.read(public_input.round),
+                public_input.vote < self.vote_size.read(public_input.round),
                 'Invalid vote value',
             );
             let computed_nullifier = poseidon_hash_span(
@@ -220,6 +225,7 @@ mod PrivateVoteVerifierMultiRound {
         }
 
         fn verify_vote(ref self: ContractState, public_message: L1L2message) {
+            assert(self.vote_is_open.read(public_message.round), 'Vote is not open');
             assert(
                 public_message.vote < self.vote_size.read(public_message.round),
                 'Invalid vote value',
@@ -238,6 +244,7 @@ mod PrivateVoteVerifierMultiRound {
                 to_address: 0x00_felt252.try_into().unwrap(),
             };
             let calculated_message_H = _compute_message_hash_for_proof_facts(@message);
+            assert(proof_facts.len() == 1, 'Expected exactly 1 proof msg');
             assert(calculated_message_H == *proof_facts.at(0), 'pub message not related to hash');
             // ******** Verifications made ; record the vote
             self.used_nullifiers.write(nullifier_key, true);
@@ -267,6 +274,7 @@ mod PrivateVoteVerifierMultiRound {
         fn update_merkle_root(ref self: ContractState, new_root: felt252) {
             assert(get_caller_address() == self.owner.read(), 'Only owner');
             self.merkle_root.write(new_root);
+            self.emit(MerkleRootUpdated { new_root });
         }
 
         fn is_nullifier_used(self: @ContractState, round: u32, nullifier: felt252) -> bool {
@@ -277,6 +285,8 @@ mod PrivateVoteVerifierMultiRound {
 
         fn open_round(ref self: ContractState, round: u32, vote_size: u8) {
             assert(get_caller_address() == self.owner.read(), 'Only owner');
+            assert(vote_size > 0, 'vote_size must be > 0');
+            assert(!self.vote_is_open.read(round), 'Round already open');
             self.vote_size.write(round, vote_size);
             self.vote_is_open.write(round, true);
             self.emit(RoundOpened { round, vote_size });
