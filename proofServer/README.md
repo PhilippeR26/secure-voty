@@ -10,7 +10,8 @@
 ## Configuration 
 Copy .env.example to .env, and adapt the content to your case.
 > [!NOTE]
-> STARKNET_ACCOUNT_ADDRESS & STARKNET_PRIVATE_KEY are not used, but are necessary. You can put any value.
+> - STARKNET_ACCOUNT_ADDRESS & STARKNET_PRIVATE_KEY are not used, but are necessary. You can put any value.
+> - If existing, delete the snip-36-prover-backend. It will re-install the last versions of the snip-36 tool and of the sequencer.
 
 ## Install
 ```bash

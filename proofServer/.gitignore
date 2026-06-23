@@ -8,4 +8,6 @@ snip-36-prover-backend/
 deps/
 sequencer_venv/
 tmp/
+*.cache
+*.TAG
 

@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 
 const REPO_DIR = path.resolve(process.env.SNIP36_REPO_DIR ?? "./snip-36-prover-backend");
+console.log({REPO_DIR});
 export const BINARY = path.join(REPO_DIR, "target/release/snip36");
 export const REPO_CWD = REPO_DIR;
 

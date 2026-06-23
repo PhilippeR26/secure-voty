@@ -9,7 +9,7 @@
   "dependencies": {
     "dotenv": "^17.4.1",
     "express": "^5.2.1",
-    "starknet": "^9.4.2",
+    "starknet": "^10.3.2",
     "@starknet-io/starknet-types-0101": "npm:@starknet-io/types-js@0.10.2"
   },
   "devDependencies": {
