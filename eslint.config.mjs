@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Sub-projects with their own tooling, not part of the Next.js app:
+    "proofServer/**",
+    "scripts/**",
   ]),
 ]);
 

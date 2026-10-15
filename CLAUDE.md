@@ -75,7 +75,7 @@ User (browser)
   → Server Action [voterProofs.ts] checks Merkle whitelist, returns leaf + proof
   → Server Action [getSNProof.ts]:
       1. builds calldata for create_proof()
-      2. calls account.getSignedTransaction() — from custom starknet.js fork (PhilippeR26/starknet.js#buildExecute)
+      2. calls account.getSignedTransaction() — from starknet.js ≥ 11.3.0
       3. POSTs tx to proof server (localhost:3030) via SSE stream
       4. returns { proof, proofFacts, l2ToL1Messages }
   → Server Action [sendVote.ts]:
@@ -86,7 +86,7 @@ User (browser)
 
 ## Key Design Decisions
 
-**Custom starknet.js fork**: `getSignedTransaction()` is only available in `github:PhilippeR26/starknet.js#buildExecute`. This method builds a signed V3 INVOKE transaction without broadcasting it — required to send it to the proof server instead.
+**`getSignedTransaction()`**: builds a signed V3 INVOKE transaction without broadcasting it — required to send it to the proof server instead. The DAPP uses starknet.js ≥ 11.3.0 from npm, published under the `next` dist-tag (not `latest`, which is still 10.8.0 and lacks this method). `scripts/` still depends on the former fork `github:PhilippeR26/starknet.js#buildExecute`.
 
 **SNIP-36 proof pattern**: The `create_proof()` function emits a L2→L1 message containing the public outputs `(round, nullifier, vote)`. The proof server captures this message. On verification, `verify_vote()` reads the message hash from `proof_facts` via `get_execution_info_v3_syscall()` and compares it against the calldata — ensuring the on-chain calldata matches what was proven.
 

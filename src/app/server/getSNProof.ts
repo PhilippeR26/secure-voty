@@ -28,7 +28,7 @@ export async function getSNProof(publicData: PublicInputsForProof): Promise<Prov
         public_input: publicData,
         private_input: privateData,
     });
-    // **** ⚠️⚠️⚠️ getSignedTransaction is only available from https://github.com/PhilippeR26/starknet.js/tree/buildExecute branch
+    // getSignedTransaction() builds and signs the INVOKE V3 tx without broadcasting it, so that the proof server can execute it virtually.
     const tx: INVOKE_TXN_V3 = await account0.getSignedTransaction(myCalldata);
 
     const currentBlock: number = await myProvider.getBlockNumber();

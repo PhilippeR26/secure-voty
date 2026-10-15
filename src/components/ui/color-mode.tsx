@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useSyncExternalStore } from "react"
 
 type ColorMode = "light" | "dark"
 
@@ -16,21 +16,36 @@ const ColorModeContext = createContext<ColorModeContextType>({
   setColorMode: () => {},
 })
 
+// The color mode lives in localStorage (an external store): useSyncExternalStore reconciles
+// the server render ("light") with the client value, without calling setState in an effect.
+const listeners = new Set<() => void>()
+
+function subscribe(listener: () => void) {
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+  }
+}
+
+function getSnapshot(): ColorMode {
+  const stored = localStorage.getItem("color-mode") as ColorMode | null
+  return stored ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+}
+
+function getServerSnapshot(): ColorMode {
+  return "light"
+}
+
 export function ColorModeProvider({ children }: { children: React.ReactNode }) {
-  const [colorMode, setColorModeState] = useState<ColorMode>("light")
+  const colorMode = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
   useEffect(() => {
-    const stored = localStorage.getItem("color-mode") as ColorMode | null
-    const preferred = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
-    const initial = stored ?? preferred
-    setColorModeState(initial)
-    document.documentElement.classList.toggle("dark", initial === "dark")
-  }, [])
+    document.documentElement.classList.toggle("dark", colorMode === "dark")
+  }, [colorMode])
 
   const setColorMode = (mode: ColorMode) => {
-    setColorModeState(mode)
     localStorage.setItem("color-mode", mode)
-    document.documentElement.classList.toggle("dark", mode === "dark")
+    listeners.forEach((listener) => listener())
   }
 
   const toggleColorMode = () => {
