@@ -19,7 +19,7 @@ In this demo, both servers run locally:
 - The proof server is based on an existing repository (see below).
 
 ## Requirements
-- Approximately 17 GB of free RAM (15 GB for the proof server).
+- Approximately 4 GB of free RAM (2 GB for the proof server).
 - About 10 GB of storage (mainly for the proof server).
 - The more powerful your PC, the faster the proof generation.
 - Rust: stable (for workspace crates) + `nightly-2025-07-14` (for the s-two prover).
@@ -80,7 +80,7 @@ npm install && npm run dev
 
 Open http://localhost:3000
 
-Make sure you have about 15 GB of RAM available.
+Make sure you have about 4 GB of RAM available.
 
 **You can test the demo using the email address `you@outlook.com` and the user secret `12345678`.**
 In `src/app/constants.ts` , select a round number not yet used (for example a large random number).
@@ -368,6 +368,6 @@ The proof is verified automatically by Starknet, the proof facts are validated i
 
 This voting example illustrates the core concepts and practical usage of SNIP-36 proofs.
 
-SNIP-36 opens up a new range of powerful applications on Starknet. The main remaining challenge for wide adoption is reducing the RAM and CPU requirements for proof generation.
+SNIP-36 opens up a new range of powerful applications on Starknet. The main remaining challenge for wide adoption is reducing the CPU requirements for proof generation.
 
 We look forward to rapid improvements in this area.

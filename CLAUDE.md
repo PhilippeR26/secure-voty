@@ -58,7 +58,7 @@ npm install
 npm run build
 npm run start          # listens on http://localhost:3030
 ```
-First launch downloads ~10 GB of Starknet code (≈20 min). Requires ~15 GB free RAM and Rust stable + `nightly-2025-07-14`.
+First launch downloads ~10 GB of Starknet code (≈20 min). Requires ~2 GB free RAM (peak measured with snip-36 v1.3.0) and Rust stable + `nightly-2025-07-14`.
 
 ## Environment Setup
 

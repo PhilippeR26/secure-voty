@@ -1,9 +1,9 @@
 # Generic SNIP-36 virtual transaction prover
 
 ## Requirements
-- about 15 Gb free RAM.
+- about 2 Gb free RAM (peak measured with snip-36 v1.3.0).
 - About 10 Gb of storage.
-- More powerful is your PC, faster is the proof calculation (40s on my PC)
+- More powerful is your PC, faster is the proof calculation (44s on my PC)
 - Rust: stable (for workspace crates) + `nightly-2025-07-14` (for stwo prover).
 - Starknet RPC node — for state reads before proving. For Pathfinder, v0.22.2 minimum.
 
