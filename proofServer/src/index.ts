@@ -33,7 +33,8 @@ async function main(): Promise<void> {
     await server.stop();
     const { pidFile } = instanceFiles(layout, name);
     try {
-      if (fs.readFileSync(pidFile, "utf8").trim() === String(process.pid)) fs.rmSync(pidFile);
+      const firstLine = fs.readFileSync(pidFile, "utf8").split("\n")[0];
+      if (firstLine.trim() === String(process.pid)) fs.rmSync(pidFile);
     } catch {
       // no pid file: started by hand
     }

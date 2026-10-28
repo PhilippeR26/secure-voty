@@ -1,5 +1,6 @@
 import fs from "fs";
 import net from "net";
+import path from "path";
 
 function errorCode(err: unknown): string | undefined {
   return (err as NodeJS.ErrnoException).code;
@@ -72,4 +73,31 @@ export async function waitUntil(
     await new Promise((resolve) => setTimeout(resolve, stepMs));
   }
   return true;
+}
+
+export type RunState = "running" | "stopped" | "crashed";
+
+// A pid file holds the pid, then (second line) the start time of the process when /proc can tell it. After a
+// crash or a reboot, the pid may belong to another program: its start time is not the recorded one, and the file
+// is not taken for the server (which `stop` would otherwise signal).
+export function writePidFile(file: string, pid: number): void {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const started = processStartTime(pid);
+  fs.writeFileSync(file, started === null ? `${pid}\n` : `${pid}\n${started}\n`);
+}
+
+// No file: stopped. A file whose process is gone or is another program: crashed. Else running.
+export function pidFileState(file: string): { state: RunState; pid: number | null } {
+  let text: string;
+  try {
+    text = fs.readFileSync(file, "utf8");
+  } catch {
+    return { state: "stopped", pid: null };
+  }
+  const [first, started] = text.split("\n");
+  const pid = Number(first);
+  if (!Number.isInteger(pid) || pid <= 0) return { state: "crashed", pid: null };
+  if (!isProcessAlive(pid)) return { state: "crashed", pid };
+  if (started && processStartTime(pid) !== started) return { state: "crashed", pid };
+  return { state: "running", pid };
 }
