@@ -22,8 +22,7 @@ In this demo, both servers run locally:
 - Approximately 4 GB of free RAM (2 GB for the proof server).
 - About 10 GB of storage (mainly for the proof server).
 - The more powerful your PC, the faster the proof generation.
-- Rust: stable (for workspace crates) + `nightly-2025-07-14` (for the s-two prover).
-- Python 3.
+- For the proof server: Node.js 22 or newer, Rust stable and Python 3.12. The Rust nightly toolchain that the prover also needs is installed by `./proof-server.sh setup` (see [proofServer/INSTALL.md](proofServer/INSTALL.md)).
 - A Starknet RPC node — required for state reads before proof generation. For Pathfinder, v0.22.2 minimum.
 - Your contract has to be compiled with Cairo 2.17.0-rc.4 minimum. 
 
@@ -47,35 +46,28 @@ This server must be under your full control, and you must ensure a high level of
 
 This demo uses the following repository: https://github.com/starknet-innovation/snip-36-prover-backend
 
-To run the proof server:
+To run the proof server (step-by-step guide: [proofServer/INSTALL.md](proofServer/INSTALL.md); commands and API: [proofServer/README.md](proofServer/README.md)):
 
 ```bash
 cd proofServer
+npm install && npm run build
+./proof-server.sh setup                          # once: clones and builds the prover (20 to 30 minutes)
+cp instances/example.env instances/sepolia.env   # then edit it, see below
+./proof-server.sh start sepolia
 ```
-
-Copy `.env.example` to `.env` and adjust the values according to your setup.
 
 > [!IMPORTANT]
-> The proof server must be configured on the same network as the DAPP (root `.env`), which runs on **Starknet Sepolia (testnet)**:
-> - `STARKNET_CHAIN_ID="SN_SEPOLIA"`
+> The proof server instance must be on the same network as the DAPP (root `.env`), which runs on **Starknet Sepolia (testnet)**. In `proofServer/instances/sepolia.env`:
+> - `NETWORK=sepolia`
 > - `STARKNET_RPC_URL` pointing to a Sepolia node.
 >
-> The voting contract is deployed on Sepolia, the virtual transaction is signed for the Sepolia chain ID, and the proof server reads the Sepolia state at the block chosen by the DAPP. With a proof server configured on another network, the proof generation fails.
+> The voting contract is deployed on Sepolia, the virtual transaction is signed for the Sepolia chain ID, and the proof server reads the Sepolia state at the block chosen by the DAPP. The server refuses to start when its node is not on the network named by `NETWORK`.
 
-> [!NOTE]
-> `STARKNET_ACCOUNT_ADDRESS` and `STARKNET_PRIVATE_KEY` are not used but are required fields. You can enter any values.
+The DAPP and the scripts find the proof server through two variables of their `.env` (see `.env-example`):
+- `PROOF_SERVER_URL`: by default `http://localhost:3030`, the local-network port of the instance. A public instance is `https://<name>/<instance>`.
+- `PROOF_SERVER_API_KEY`: only for a public instance, the key given by its owner. The local-network port needs none.
 
-Launch the server with:
-
-```bash
-npm install
-npm run build
-npm run start
-```
-
-The first launch will download, install, and compile approximately 10 GB of Starknet-related code. This process takes about 20 minutes (on my machine).
-
-The server runs locally on port 3030.
+The same installation can also be opened to the Internet, with an API key and a daily quota for each site that uses it: see [proofServer/INSTALL.md](proofServer/INSTALL.md#6-go-public-duckdns-your-box-caddy).
 
 ## Frontend (Next.js)
 
@@ -241,7 +233,7 @@ The result is:
 
 ### 3. Off-chain Execution of the Transaction
 
-The proof server must be running and listening on port 3030.
+The proof server must be running (see [proofServer/INSTALL.md](proofServer/INSTALL.md)). The `requestProof()` function below reads its address in `PROOF_SERVER_URL` (default `http://localhost:3030`) and, for a public server, the key of your site in `PROOF_SERVER_API_KEY`.
 
 Choose the blockchain block that will serve as the basis for the virtual execution. As a first approach, use the latest block:
 

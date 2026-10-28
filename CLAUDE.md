@@ -7,11 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Secure-Voty** is a demo DAPP showcasing SNIP-36 (Starknet proofs). It implements a privacy-preserving voting system: votes are stored on-chain without revealing who voted what, while guaranteeing each voter is whitelisted and can only vote once.
 
 The core innovation is **off-chain proof generation**: a signed transaction calling `create_proof()` is executed virtually in a proof server (not broadcast to the network), producing a ZK proof. That proof is then submitted on-chain to `verify_vote()`, which verifies it and tallies the vote.
-This demo is used only locally,with a local proof server waiting at port 3030.
-
-## Work in progress
-
-The proof server in `proofServer/` is being rewritten into an Internet-facing server (site API keys, daily quotas, queue, HTTPS through Caddy), started and stopped by hand with `proofServer/proof-server.sh`. Design: `docs/superpowers/specs/2026-10-28-proof-server-design.md`. Implementation plan, to execute task by task on the mini PC: `docs/superpowers/plans/2026-10-28-proof-server.md`. Until that plan is done, the rest of this file still describes the old proof server.
+The DAPP reaches the proof server at `PROOF_SERVER_URL` (default `http://localhost:3030`), possibly a public instance behind Caddy, used with `PROOF_SERVER_API_KEY`.
 
 ## Project Structure
 
@@ -22,7 +18,7 @@ The repo has four distinct sub-projects:
 | `src/` | Next.js 16 frontend + Server Actions (the main app) |
 | `cairoContract/voty/` | Cairo 2.17 smart contract (Scarb project) |
 | `scripts/` | Standalone Node.js scripts for setup and testing |
-| `proofServer/` | Rust-based SNIP-36 proof server (separate repo, ~10 GB) |
+| `proofServer/` | TypeScript proof server (queue, site keys, quotas) wrapping the snip36 prover; prover checkout ~10 GB, git-ignored |
 
 ## Commands
 
@@ -57,12 +53,14 @@ npx ts-node ./src/6.getVoteResults.ts # read tallies
 ### Proof Server
 ```bash
 cd proofServer
-cp .env.example .env   # fill in STARKNET_RPC_URL; other fields can be placeholder values
-npm install
-npm run build
-npm run start          # listens on http://localhost:3030
+npm install && npm run build
+./proof-server.sh setup                          # once: clones and builds the prover
+cp instances/example.env instances/sepolia.env   # then set NETWORK and STARKNET_RPC_URL in it
+./proof-server.sh start sepolia                  # LAN listener on http://localhost:3030
+./proof-server.sh status
+./proof-server.sh stop
 ```
-First launch downloads ~10 GB of Starknet code (≈20 min). Requires ~2 GB free RAM (peak measured with snip-36 v1.3.0) and Rust stable + `nightly-2025-07-14`.
+`setup` takes 20 to 30 minutes and about 8 GB of disk; a proof used up to 1.6 GB of RAM (sampled). Full guide (prerequisites, site keys and quotas, HTTPS through Caddy): `proofServer/INSTALL.md`. Commands and API: `proofServer/README.md`.
 
 ## Environment Setup
 
@@ -70,6 +68,8 @@ Copy `.env-example` to `.env` at project root and fill in:
 - `STARKNET_RPC_URL` — Pathfinder v0.22.2+ node required
 - `STARKNET_ACCOUNT_ADDRESS` / `ACCOUNT_PRIVATE_KEY` — Starknet account for submitting on-chain tx
 - `STARKNET_CHAIN_ID` — e.g. `SN_SEPOLIA`
+- `PROOF_SERVER_URL` (optional) — proof server address, default `http://localhost:3030`; a public instance is `https://<name>.duckdns.org/<instance>`
+- `PROOF_SERVER_API_KEY` (optional) — only for a public proof server: the key its owner gave you
 
 ## Architecture: Data Flow
 
@@ -80,7 +80,7 @@ User (browser)
   → Server Action [getSNProof.ts]:
       1. builds calldata for create_proof()
       2. calls account.getSignedTransaction() — from starknet.js ≥ 11.3.0
-      3. POSTs tx to proof server (localhost:3030) via SSE stream
+      3. POSTs tx to the proof server (`PROOF_SERVER_URL`) via SSE stream
       4. returns { proof, proofFacts, l2ToL1Messages }
   → Server Action [sendVote.ts]:
       1. decodes public outputs from l2ToL1Messages payload
