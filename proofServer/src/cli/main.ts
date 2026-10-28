@@ -1,5 +1,8 @@
 import { Layout, resolveLayout } from "../layout";
+import { caddyfileCommand } from "./caddy";
 import { restartCommand, startCommand, statusCommand, stopCommand } from "./lifecycle";
+import { setupCommand } from "./setup";
+import { siteCommand } from "./site";
 
 export type Out = (line: string) => void;
 // Returns the exit code.
@@ -29,10 +32,13 @@ const COMMANDS: Record<string, Command> = {
   stop: stopCommand,
   restart: restartCommand,
   status: statusCommand,
+  setup: setupCommand,
+  site: siteCommand,
+  caddyfile: caddyfileCommand,
 };
 
-// Announced by help, written by the next tasks.
-const PLANNED = ["setup", "stats", "site", "caddyfile"];
+// Announced by help, written by the next task.
+const PLANNED = ["stats"];
 
 export async function main(argv: string[], layout: Layout = resolveLayout(), out: Out = console.log): Promise<number> {
   const nodeMajor = Number(process.versions.node.split(".")[0]);
