@@ -1,0 +1,15 @@
+{
+  "limits": {
+    "machineSlots": 1, "queueMax": 10, "perSiteQueueMax": 2,
+    "maxWaitSec": 900, "proofTimeoutSec": 600, "maxBodyKB": 256,
+    "badKey": { "maxFailures": 10, "windowMin": 10, "banMin": 60 }
+  },
+  "sites": {
+    "example-site": {
+      "keySha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "enabled": false,
+      "perDay": { "sepolia": 10 },
+      "note": "Placeholder. Create real sites with: ./proof-server.sh site add <name> --sepolia 100"
+    }
+  }
+}
