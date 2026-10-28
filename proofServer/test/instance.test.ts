@@ -85,6 +85,14 @@ test("instance names must be URL-safe", () => {
   );
 });
 
+test("the name caddy is reserved: its pid file and log belong to Caddy", () => {
+  const layout = resolveLayout({ PROOF_SERVER_HOME: "/nonexistent" });
+  assert.throws(
+    () => loadInstance(layout, "caddy"),
+    (e) => e instanceof InstanceError && /reserved/.test(e.message),
+  );
+});
+
 test("listInstances skips example.env", async (t) => {
   const h = await makeHome();
   t.after(() => h.cleanup());

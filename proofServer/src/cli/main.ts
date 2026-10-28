@@ -3,6 +3,7 @@ import { caddyfileCommand } from "./caddy";
 import { restartCommand, startCommand, statusCommand, stopCommand } from "./lifecycle";
 import { setupCommand } from "./setup";
 import { siteCommand } from "./site";
+import { statsCommand } from "./stats";
 
 export type Out = (line: string) => void;
 // Returns the exit code.
@@ -16,7 +17,7 @@ const HELP = [
   "  stop [<instance>|all]       stop them; a proof that is running is allowed to finish",
   "  restart [<instance>|all]    stop, then start",
   "  status                      state of every instance and of Caddy",
-  "  stats [options]             statistics from the logs",
+  "  stats [options]             statistics from the logs: --since 7d | --day YYYY-MM-DD, --site, --instance, --json",
   "  site <command> ...          the sites that may use the server: keys and daily quotas",
   "  caddyfile --domain <name>   generate deploy/Caddyfile for the public instances",
   "  help                        this text",
@@ -32,13 +33,11 @@ const COMMANDS: Record<string, Command> = {
   stop: stopCommand,
   restart: restartCommand,
   status: statusCommand,
+  stats: statsCommand,
   setup: setupCommand,
   site: siteCommand,
   caddyfile: caddyfileCommand,
 };
-
-// Announced by help, written by the next task.
-const PLANNED = ["stats"];
 
 export async function main(argv: string[], layout: Layout = resolveLayout(), out: Out = console.log): Promise<number> {
   const nodeMajor = Number(process.versions.node.split(".")[0]);
@@ -59,10 +58,6 @@ export async function main(argv: string[], layout: Layout = resolveLayout(), out
       out(`${name}: ${(err as Error).message}`);
       return 1;
     }
-  }
-  if (name !== undefined && PLANNED.includes(name)) {
-    out(`${name}: not available yet`);
-    return 1;
   }
   if (name !== undefined) out(`Unknown command: ${name}`);
   printHelp(out);

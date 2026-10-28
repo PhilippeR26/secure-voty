@@ -1,0 +1,16 @@
+{"ts":"2026-10-28T10:00:00.000Z","inst":"sepolia","ev":"request","reqId":"a","site":"voty","ip":"1.1.1.1"}
+{"ts":"2026-10-28T10:00:00.010Z","inst":"sepolia","ev":"queued","reqId":"a","site":"voty","queueLen":1}
+{"ts":"2026-10-28T10:00:00.020Z","inst":"sepolia","ev":"start","reqId":"a","site":"voty","waitMs":20}
+{"ts":"2026-10-28T10:00:44.020Z","inst":"sepolia","ev":"done","reqId":"a","site":"voty","durMs":44000}
+{"ts":"2026-10-28T10:01:00.000Z","inst":"sepolia","ev":"request","reqId":"b","site":"voty","ip":"1.1.1.1"}
+{"ts":"2026-10-28T10:01:00.010Z","inst":"sepolia","ev":"queued","reqId":"b","site":"voty","queueLen":2}
+{"ts":"2026-10-28T10:01:30.000Z","inst":"sepolia","ev":"start","reqId":"b","site":"voty","waitMs":30000}
+{"ts":"2026-10-28T10:02:20.000Z","inst":"sepolia","ev":"done","reqId":"b","site":"voty","durMs":50000}
+{"ts":"2026-10-28T11:00:00.000Z","inst":"sepolia","ev":"request","reqId":"c","site":"voty","ip":"1.1.1.1"}
+{"ts":"2026-10-28T11:00:00.001Z","inst":"sepolia","ev":"reject","reqId":"c","site":"voty","ip":"1.1.1.1","reason":"quota_exceeded"}
+{"ts":"2026-10-28T11:05:00.000Z","inst":"sepolia","ev":"reject","reqId":"d","ip":"6.6.6.6","reason":"unknown_key"}
+{"ts":"2026-10-29T09:00:00.000Z","inst":"sepolia","ev":"request","reqId":"e","site":"lan","ip":"192.168.1.20"}
+{"ts":"2026-10-29T09:00:00.010Z","inst":"sepolia","ev":"queued","reqId":"e","site":"lan","queueLen":1}
+{"ts":"2026-10-29T09:00:00.020Z","inst":"sepolia","ev":"start","reqId":"e","site":"lan","waitMs":10}
+{"ts":"2026-10-29T09:00:30.000Z","inst":"sepolia","ev":"fail","reqId":"e","site":"lan","durMs":29980,"reason":"Vote is not open"}
+this line is not JSON

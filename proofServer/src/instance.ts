@@ -52,6 +52,9 @@ export function loadInstance(layout: Layout, name: string): InstanceConfig {
       `instance name "${name}" is invalid: use lowercase letters, digits and dashes, starting with a letter or a digit`,
     );
   }
+  if (name === "caddy") {
+    throw new InstanceError('instance name "caddy" is reserved: state/caddy.pid and logs/caddy.log belong to Caddy');
+  }
   const label = `instances/${name}.env`;
 
   let text: string;
