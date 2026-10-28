@@ -1,6 +1,7 @@
 import { spawn } from "child_process";
 import fs from "fs";
 import path from "path";
+import { num } from "starknet";
 import { CHAIN_NAMES, Network } from "./instance";
 import { isGroupAlive, killGroup, waitUntil } from "./proc";
 
@@ -55,16 +56,12 @@ const PATH_RE = /(?:\/[\w.@+-]+){2,}/g;
 const NUMBERED_RE = /^\d+:\s+/;
 const BACKTRACE_HINT_RE = /^(?:Backtrace omitted|Run with RUST_BACKTRACE)/i;
 const HEX_RE = /0x[0-9a-fA-F]+/g;
-const ZERO_PADDING_RE = /0x0{4,}(?=[0-9a-fA-F])/g;
+const SMALLEST_SECRET = 0x10n; // a value of one hex digit is structure of the call, not a secret
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
-function significantHex(token: string): string {
-  return token.slice(2).toLowerCase().replace(/^0+/, "");
-}
-
 // Replaces, in `text`, the hex values found in the calldata or the signature of `tx`: a message of the prover
-// must never carry the voter's secret into a log. A value of one hex digit is structure, not a secret.
+// must never carry the voter's secret into a log. Values are compared in their short form (num.cleanHex).
 export function redactTxValues(text: string, tx: unknown): string {
   const secrets = new Set<string>();
   if (typeof tx === "object" && tx !== null) {
@@ -72,14 +69,14 @@ export function redactTxValues(text: string, tx: unknown): string {
       const values = (tx as Record<string, unknown>)[key];
       if (!Array.isArray(values)) continue;
       for (const value of values) {
-        if (typeof value !== "string" || !/^0x[0-9a-fA-F]+$/.test(value)) continue;
-        const significant = significantHex(value);
-        if (significant.length >= 2) secrets.add(significant);
+        if (typeof value === "string" && value.length > 2 && num.isHex(value) && num.toBigInt(value) >= SMALLEST_SECRET) {
+          secrets.add(num.cleanHex(value));
+        }
       }
     }
   }
   if (secrets.size === 0) return text;
-  return text.replace(HEX_RE, (token) => (secrets.has(significantHex(token)) ? "<redacted>" : token));
+  return text.replace(HEX_RE, (token) => (secrets.has(num.cleanHex(token)) ? "<redacted>" : token));
 }
 
 // The line of the report that says why: the deepest cause of an `Error:` chain (color-eyre prints
@@ -120,7 +117,7 @@ export function sanitizeReason(stderrTail: string, tx?: unknown): string {
   const lines = stderrTail.replace(ANSI_RE, "").split("\n").map((line) => line.trim());
   let text = rpcMessage(pickLine(lines).replace(NUMBERED_RE, "")).replace(/\s+/g, " ");
   if (tx !== undefined) text = redactTxValues(text, tx); // before the cut, so that no value is cut in the middle
-  text = text.replace(ZERO_PADDING_RE, "0x"); // felts come padded to 64 digits: keep the reason short
+  text = text.replace(HEX_RE, (token) => num.cleanHex(token)); // felts come padded to 64 digits: keep it short
   return text.replace(PATH_RE, "<path>").trim().slice(0, MAX_REASON_CHARS);
 }
 

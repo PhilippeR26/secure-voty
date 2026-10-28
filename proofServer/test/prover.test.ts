@@ -199,7 +199,8 @@ test("sanitizeReason reads the error report of snip36", () => {
   ].join("\n");
   assert.equal(
     sanitizeReason(report),
-    "Transaction execution failed: Invalid transaction nonce of contract at address 0x0304c822792da45bf6f8e6957aa9515bd7b365f05b5c1678f61ae0c46213251c. Account nonce: 0x1ce; got: 0x1c6.",
+    // every hex value is shortened by num.cleanHex, the address too: 0x0304c8… is written 0x304c8…
+    "Transaction execution failed: Invalid transaction nonce of contract at address 0x304c822792da45bf6f8e6957aa9515bd7b365f05b5c1678f61ae0c46213251c. Account nonce: 0x1ce; got: 0x1c6.",
   );
 
   // the deepest cause of a chain is the last numbered line

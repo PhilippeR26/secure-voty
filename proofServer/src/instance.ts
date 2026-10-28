@@ -1,14 +1,18 @@
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
+import { constants } from "starknet";
 import { Layout, instanceFiles } from "./layout";
 
 export type Network = "mainnet" | "sepolia";
 export const NETWORKS: readonly Network[] = ["mainnet", "sepolia"];
-export const CHAIN_NAMES: Record<Network, string> = { mainnet: "SN_MAIN", sepolia: "SN_SEPOLIA" };
+export const CHAIN_NAMES: Record<Network, string> = {
+  mainnet: constants.NetworkName.SN_MAIN,
+  sepolia: constants.NetworkName.SN_SEPOLIA,
+};
 export const CHAIN_IDS: Record<Network, string> = {
-  mainnet: "0x534e5f4d41494e",
-  sepolia: "0x534e5f5345504f4c4941",
+  mainnet: constants.StarknetChainId.SN_MAIN,
+  sepolia: constants.StarknetChainId.SN_SEPOLIA,
 };
 
 export interface InstanceConfig {
