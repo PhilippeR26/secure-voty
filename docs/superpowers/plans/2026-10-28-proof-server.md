@@ -14,7 +14,8 @@
 
 - Server code lives in `proofServer/`; run `npm` commands there unless a step says otherwise.
 - Node.js ≥ 22 (`node --test` globs, `util.parseArgs`, global `fetch`); `package.json` declares `"engines": { "node": ">=22" }`.
-- Runtime dependencies: `express` ^5.2.1, `dotenv` ^17.4.1, the `@starknet-io/starknet-types-0101` alias (types). No new runtime dependency. `starknet` is removed in Task 9.
+- Runtime dependencies: `express` ^5.2.1, `dotenv` ^17.4.1, `starknet` ^11.4.3 (starknet.js, dist-tag `next`), the `@starknet-io/starknet-types-0101` alias (types). No other runtime dependency.
+- **Use starknet.js as much as possible.** What it already offers (chain ids and names, hex and felt conversions, felt and address range checks, the RPC provider, short strings, transaction constants...) is taken from it, not rewritten. Read the installed `node_modules/starknet/dist/index.d.ts` rather than trusting memory, and write by hand only what the library does not provide, with a comment saying why. Where a task below describes a hand-written check that the library does (the felt regex or the `BigInt` comparison of chain ids in Task 9, for instance), the library wins.
 - Keep `proofServer/tsconfig.json` as is (it compiles with TypeScript 6.0.2). Style of `proofServer/src`: 2-space indent, double quotes, semicolons.
 - Tests: `node:test` + `node:assert/strict`, files `proofServer/test/**/*.test.ts`. All: `npm test` (= `node --import tsx --test --test-concurrency=1 "test/**/*.test.ts"`). One file: `node --import tsx --test test/<name>.test.ts`. Tests that set `FAKE_*` environment variables delete them in `afterEach`.
 - English for code, comments, log events, CLI output and docs.
@@ -713,7 +714,7 @@ test("status lists jobs without transaction data", ...)                  // JSON
 - Create: `proofServer/src/validate.ts`, `proofServer/src/sse.ts`, `proofServer/src/rpc.ts`, `proofServer/src/app.ts`, `proofServer/src/server.ts`, `proofServer/test/validate.test.ts`, `proofServer/test/app-helpers.test.ts`, `proofServer/test/server.test.ts`, `proofServer/test/helpers/rpc.ts`, `proofServer/test/helpers/sse.ts`, `proofServer/test/helpers/server.ts`
 - Replace: `proofServer/src/index.ts`
 - Delete: `proofServer/src/build.ts`, `proofServer/src/prove.ts`
-- Modify: `proofServer/package.json` (remove the `starknet` dependency, then `npm install`)
+- Modify: `proofServer/package.json` (`starknet` stays, with the floor `^11.4.3`: it is used, see Global Constraints)
 
 **Interfaces — Consumes:** Tasks 1–8. **Produces:**
 
@@ -834,7 +835,7 @@ test("startup failures explain what to do", ...)   // no running server:
 ```
 
 - [ ] **Step 2: Run** the three files — expected FAIL.
-- [ ] **Step 3: Implement** the modules and helpers above; replace `src/index.ts`; delete `src/build.ts` and `src/prove.ts`; remove `starknet` from `package.json` dependencies and run `npm install`.
+- [ ] **Step 3: Implement** the modules and helpers above; replace `src/index.ts`; delete `src/build.ts` and `src/prove.ts`. Keep `starknet` in `package.json` (`^11.4.3`) and use it: chain ids and names (`constants`), `RpcProvider.getChainId()`, felt and address checks (`num`, `validateAndParseAddress`), as the Global Constraints require.
 - [ ] **Step 4: Run** `npm test` → PASS; `npm run build` → exit 0, `dist/` holds no `build.js` or `prove.js`.
 - [ ] **Step 5: Smoke test with the real prover** (once Task 0 Step 6 passed): create `instances/local.env` (LAN only, a real node URL); `node dist/index.js local` → one line with the URLs; from another shell `curl -s http://127.0.0.1:3030/health` → `{"ok":true,"network":"…","queueLength":0,"running":0}`; Ctrl-C → exits within a second.
 - [ ] **Step 6: Commit checkpoint** — `feat(proofServer): new HTTP server with LAN and public listeners`; stage the created files, `proofServer/src/index.ts`, the deleted `proofServer/src/build.ts` and `proofServer/src/prove.ts`, `proofServer/package.json`.

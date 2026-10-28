@@ -126,6 +126,7 @@ This is a demo. So, some security problems are acceptable for pedagogical purpos
 - Language: English in all code comments, and UI strings. In Claude conversations, speak French.
 - No write in issues or PRs.
 - **[Not validated] label:** Any claim not directly confirmed by reading the codebase, running a command, or verified documentation MUST be prefixed with **[Not validated]**. This includes function names, API signatures, file paths, and behavior descriptions.
+- **Use starknet.js (snjs) as much as possible.** Before writing any helper about Starknet (chain ids and names, felt and hex conversions or range checks, address validation, hashes, short strings, RPC calls, transaction constants), look for it in the installed `starknet` package and use it. Read its `dist/index.d.ts`, not memory: the API changes between major versions. Write by hand only what the library does not offer, and say why in a comment. This applies to `proofServer/` too, which depends on `starknet` (dist-tag `next`).
 - No co-author in commits.
 - Pay attention that I don't understand Python.
 - For each non-trivial command execution request, explain what you intend to do before running it.
