@@ -1,17 +1,12 @@
 node_modules/
 dist/
-output/
-.env
-.env.mainnet
-.env.testnet
 snip-36-prover-backend/
-deps/
-sequencer_venv/
 tmp/
-*.cache
-*.TAG
 
-# proof server v2: machine-specific files
+# the former proof server kept keys in .env: never commit one
+.env
+
+# machine-specific files
 instances/*.env
 !instances/example.env
 config/sites.json

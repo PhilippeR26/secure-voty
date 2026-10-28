@@ -236,6 +236,7 @@ export function startProof(spec: ProofSpec): ProofRun {
           ...process.env,
           STARKNET_RPC_URL: spec.rpcUrl,
           STARKNET_CHAIN_ID: CHAIN_NAMES[spec.network],
+          // Never used to prove, but snip36 refuses to start without an account (snip36-core config.rs).
           STARKNET_ACCOUNT_ADDRESS: "0x1",
           STARKNET_PRIVATE_KEY: "0x1",
           SNIP36_PROJECT_DIR: spec.repoDir,
