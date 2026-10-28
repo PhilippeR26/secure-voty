@@ -9,6 +9,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 The core innovation is **off-chain proof generation**: a signed transaction calling `create_proof()` is executed virtually in a proof server (not broadcast to the network), producing a ZK proof. That proof is then submitted on-chain to `verify_vote()`, which verifies it and tallies the vote.
 This demo is used only locally,with a local proof server waiting at port 3030.
 
+## Work in progress
+
+The proof server in `proofServer/` is being rewritten into an Internet-facing server (site API keys, daily quotas, queue, HTTPS through Caddy), started and stopped by hand with `proofServer/proof-server.sh`. Design: `docs/superpowers/specs/2026-10-28-proof-server-design.md`. Implementation plan, to execute task by task on the mini PC: `docs/superpowers/plans/2026-10-28-proof-server.md`. Until that plan is done, the rest of this file still describes the old proof server.
+
 ## Project Structure
 
 The repo has four distinct sub-projects:
@@ -109,9 +113,19 @@ User (browser)
 
 Email: `you@outlook.com` / Secret: `12345678` (committed in `secrets.json` for demo purposes)
 
-To start a new voting round, set `round` in `src/app/constants.ts` to an unused number.
+To start a new voting round, set `round` in `src/app/constants.ts` to an unused number, then stop and restart `npm run dev`: the round is opened on-chain by `src/instrumentation.ts`, which runs only once at server startup. Hot reload alone leaves the new round closed, and `create_proof()` then fails in the proof server with `Vote is not open`.
 
 ## specificities of this repo
 This is a demo. So, some security problems are acceptable for pedagogical purpose:
 - src/app/server/secrets.json is public in the repo.
 - the `openVote()` server action function is executed automatically at launch (not by an admin).
+
+## Rules
+
+- **No auto-commits.** The user handles all git commits. Never run `git commit` or `git add` without explicit instruction.
+- Language: English in all code comments, and UI strings. In Claude conversations, speak French.
+- No write in issues or PRs.
+- **[Not validated] label:** Any claim not directly confirmed by reading the codebase, running a command, or verified documentation MUST be prefixed with **[Not validated]**. This includes function names, API signatures, file paths, and behavior descriptions.
+- No co-author in commits.
+- Pay attention that I don't understand Python.
+- For each non-trivial command execution request, explain what you intend to do before running it.

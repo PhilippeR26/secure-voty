@@ -55,6 +55,13 @@ cd proofServer
 
 Copy `.env.example` to `.env` and adjust the values according to your setup.
 
+> [!IMPORTANT]
+> The proof server must be configured on the same network as the DAPP (root `.env`), which runs on **Starknet Sepolia (testnet)**:
+> - `STARKNET_CHAIN_ID="SN_SEPOLIA"`
+> - `STARKNET_RPC_URL` pointing to a Sepolia node.
+>
+> The voting contract is deployed on Sepolia, the virtual transaction is signed for the Sepolia chain ID, and the proof server reads the Sepolia state at the block chosen by the DAPP. With a proof server configured on another network, the proof generation fails.
+
 > [!NOTE]
 > `STARKNET_ACCOUNT_ADDRESS` and `STARKNET_PRIVATE_KEY` are not used but are required fields. You can enter any values.
 
@@ -84,6 +91,10 @@ Make sure you have about 4 GB of RAM available.
 
 **You can test the demo using the email address `you@outlook.com` and the user secret `12345678`.**
 In `src/app/constants.ts` , select a round number not yet used (for example a large random number).
+
+> [!IMPORTANT]
+> After changing the round number, stop the dev server and restart it with `npm run dev`. The round is opened on-chain by [`src/instrumentation.ts`](src/instrumentation.ts), which runs only once at server startup: hot reload picks up the new number but does not open the round, and voting then fails with `Vote is not open`.  
+> Wait for `Round opened successfully` in the terminal before voting.
 
 ## Concept of Usage
 
