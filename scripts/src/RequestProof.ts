@@ -21,15 +21,45 @@ export type L1L2message = {
     vote: BigNumberish;
 }
 
+// Why the proof server refused a request (it answers with JSON, before any stream): status, reason, message,
+// and when to try again.
+async function refusalMessage(response: Response): Promise<string> {
+    let reason = response.statusText;
+    let error = "";
+    try {
+        const body = (await response.json()) as { reason?: string; error?: string };
+        reason = body.reason ?? reason;
+        error = body.error ?? "";
+    } catch {
+        // no JSON body: the status is all there is
+    }
+    const retryAfter = response.headers.get("retry-after");
+    return (
+        `Proof server refused the request: ${response.status} ${reason}` +
+        (error ? ` — ${error}` : "") +
+        (retryAfter ? `; retry after ${retryAfter} s` : "")
+    );
+}
+
+// The proof server is PROOF_SERVER_URL (default: the one of this machine). A public one needs the key of the
+// site in PROOF_SERVER_API_KEY.
 export async function requestProof(currentBlock: number, tx: INVOKE_TXN_V3): Promise<ProveResult> {
-    const response = await fetch("http://localhost:3030/prove", {
+    const baseUrl = (process.env.PROOF_SERVER_URL || "http://localhost:3030").replace(/\/+$/, "");
+    const apiKey = process.env.PROOF_SERVER_API_KEY;
+    const response = await fetch(`${baseUrl}/prove`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+            "Content-Type": "application/json",
+            ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+        },
         body: JSON.stringify({
             blockNumber: currentBlock,
             tx,
         }),
     });
+    if (!response.ok) {
+        throw new Error(await refusalMessage(response));
+    }
     const reader = response.body!.getReader();
     const decoder = new TextDecoder();
     let buffer = ""; // store chunks
@@ -48,6 +78,12 @@ export async function requestProof(currentBlock: number, tx: INVOKE_TXN_V3): Pro
             if (!eventMatch || !dataMatch) continue;
             const event = eventMatch[1];
             const data = JSON.parse(dataMatch[1]);
+            if (event === "queued") {
+                console.log(`queued: position ${data.position}, estimated wait ${data.etaSec} s`);
+            }
+            if (event === "started") {
+                console.log("proof started");
+            }
             if (event === "log") {
                 console.log(`[${data.stream}]`, data.line);
             }
