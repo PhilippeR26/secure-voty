@@ -62,7 +62,7 @@ test("caddyfile command checks its input", async (t) => {
   assert.equal(ok.code, 0);
   assert.ok(fs.readFileSync(h.layout.caddyfile, "utf8").includes("myproof.duckdns.org {"));
   assert.match(ok.text, /https:\/\/myproof\.duckdns\.org\/sepolia\/prove/);
-  assert.match(ok.text, /Freebox: forward TCP 443 to this machine, port 8443\./);
+  assert.match(ok.text, /On your box or router: forward TCP port 443 to this machine, port 8443\./);
 });
 
 test("the committed Caddyfile.example is what renderCaddyfile gives", () => {

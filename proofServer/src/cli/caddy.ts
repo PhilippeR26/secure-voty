@@ -71,7 +71,7 @@ export async function stopCaddy(layout: Layout, out: Out): Promise<void> {
 
 const DOMAIN_RE = /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i;
 
-// HTTPS for the domain on port 8443 (the Freebox forwards its port 443 to it), and one route /<instance>/...
+// HTTPS for the domain on port 8443 (the box or router forwards its port 443 to it), and one route /<instance>/...
 // per public instance, to the listener of that instance on 127.0.0.1. LAN-only instances have no route.
 export function renderCaddyfile(layout: Layout, domain: string, instances: InstanceConfig[]): string {
   const routes = instances
@@ -148,7 +148,7 @@ export const caddyfileCommand: Command = async (layout, args, out) => {
   out(`Wrote ${layout.caddyfile}`);
   out("Public addresses:");
   for (const inst of publicInstances) out(`  https://${domain}/${inst.name}/prove`);
-  out("Freebox: forward TCP 443 to this machine, port 8443.");
+  out("On your box or router: forward TCP port 443 to this machine, port 8443.");
   out("Then run ./proof-server.sh start (or restart if the instances are already running).");
   return 0;
 };

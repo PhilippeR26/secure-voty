@@ -3,6 +3,8 @@
 This guide installs the proof server of this repository on a Linux machine, step by step, and (optionally) makes
 it reachable from the Internet. It assumes that you can open a terminal and type commands, nothing more.
 
+**Linux only:** the server does not run on macOS or Windows.
+
 Every step says **why** you do it, gives the **exact commands**, shows **what you should see**, and tells you
 **what to do if you see something else**. The outputs shown were obtained on the machine the server was built
 on (Linux Mint 22.3, 16 cores, 23 GB of RAM).
@@ -54,7 +56,8 @@ Words used below:
 
 What you need:
 
-- A Linux machine. Tested: Linux Mint 22.3 (Ubuntu 24.04 base). The commands use `apt`.
+- A Linux machine (**Linux only**: the server uses features of Linux such as `/proc`; macOS and Windows are not
+  supported). Tested: Linux Mint 22.3 (Ubuntu 24.04 base). The commands use `apt`.
 - Memory: a proof used up to **1.6 GB** (peak seen on the runner process, sampled every 2 seconds). Keep at least
   4 GB free, more if your nodes run on the same machine.
 - Disk: **8 GB** for the prover once built (7.1 GB of it in `deps/`). Keep 10 GB free.
@@ -183,9 +186,9 @@ Open `instances/sepolia.env` in an editor and set:
 |---|---|---|
 | `NETWORK` | `mainnet` or `sepolia`. It must be the network of your node. | `sepolia` |
 | `STARKNET_RPC_URL` | JSON-RPC address of your node, spec 0.10. | `http://127.0.0.1:9545/rpc/v0_10` |
-| `LAN_PORT` | port of the LAN listener (no key). | `3030` |
-| `PUBLIC_ENABLED` | `true` to also open the public listener (part 6). | `false` |
-| `PUBLIC_PORT` | port of the public listener, on `127.0.0.1` only. | `4030` |
+| `LAN_PORT` | port of the LAN listener (no key): a free port of your choice, the one clients of your local network call. | `3030` |
+| `PUBLIC_ENABLED` | `true` to also open the public listener ([part 6](#6-go-public-duckdns-your-box-caddy)). | `false` |
+| `PUBLIC_PORT` | port of the public listener: a free port of your choice, different from `LAN_PORT`. It listens on `127.0.0.1` only, so only Caddy reaches it; the `caddyfile` command reads it ([part 6.4](#64-open-the-public-listener-and-start)). | `4030` |
 | `LOG_MAX_MB`, `LOG_FILES` | optional: size and number of the log files (default 5 MB, 3 old files). | |
 | `SNIP36_BINARY` | optional: another `snip36` program. | |
 
@@ -251,7 +254,7 @@ it cannot be shown again, only a hash of it is kept.
 
 - **Copy the key now** into a password manager. The server keeps only a hash of it, so it can never show it again.
 - The site puts it in the environment of the program that calls the server, as `PROOF_SERVER_API_KEY` (see
-  section 4 for `PROOF_SERVER_URL`). Never put it in a git repository.
+  [section 4](#4-create-an-instance-and-test-it-on-your-network) for `PROOF_SERVER_URL`). Never put it in a git repository.
 - Without `--sepolia` or `--mainnet`, the site is created but may not use any network yet.
 
 Other commands (changes apply within 5 seconds, no restart):
@@ -329,18 +332,17 @@ automatically.
 
 *Why:* the box receives the visits from the Internet. It must send those for the HTTPS port to this machine.
 
-On a Freebox (other boxes work the same way, the menus differ):
+Every box or router has these settings, under names that vary; look for them in its administration page:
 
 1. **Public IPv4 address.** The port forwarding below only works if your box has its own public IPv4 address.
-   Free subscribers report on forums that recent lines share one address between several subscribers, which
-   blocks port 443, and that the fix is to ask for an **"IPv4 Full Stack"** address in the subscriber area
-   (subscribe.free.fr). This is not documented on Free's own pages as far as could be found, so check your
-   subscription.
-2. In Freebox OS (`mafreebox.freebox.fr`), give this machine a **fixed address** (a static DHCP lease).
-3. Add a **port forwarding** rule: protocol TCP, external port **443**, to the address of this machine, port
-   **8443**.
-4. Make sure Freebox OS itself does not use port 443 for its remote access, and that no DMZ points to this
-   machine.
+   Some Internet providers share one address between several customers; no forwarding can work then. Ask your
+   provider for a dedicated public IPv4 address (some give one on request, in the customer area).
+2. Give this machine a **fixed address** on your network (often called a static DHCP lease or address
+   reservation).
+3. Add a **port forwarding** rule (also called NAT or virtual server): protocol TCP, external port **443**, to the
+   address of this machine, port **8443**.
+4. Make sure the box itself does not use port 443 (for instance for its own remote administration), and that no
+   DMZ points to this machine.
 
 Forward **only** 443. Never forward 3030, 3031 or any other port of this guide.
 
@@ -352,7 +354,7 @@ timeout 15 node -e 'require("http").createServer((q,r)=>r.end("forward-ok\n")).l
 sleep 1; curl http://NAME.duckdns.org:443/
 ```
 
-*You should see:* `forward-ok`. (On the reference Freebox this works from inside the network. If your box
+*You should see:* `forward-ok`. (With the box of the reference machine this works from inside the network. If your box
 refuses a machine to call its own public address, run the same test from a phone on 4G with Wi-Fi off.)
 
 ### 6.3 Caddy
@@ -538,16 +540,17 @@ disagree on the network. Fix `NETWORK` or the address.
 there: another instance with the same port, or the old proof server. Change the port or stop that program.
 
 **`start`: `No deploy/Caddyfile: run ./proof-server.sh caddyfile --domain …`.** A public instance is running but
-Caddy has no configuration yet: part 6.4. (The instances run anyway.)
+Caddy has no configuration yet: [part 6.4](#64-open-the-public-listener-and-start). (The instances run anyway.)
 
-**`caddy not found: install it (see INSTALL.md)`.** Part 6.3.
+**`caddy not found: install it (see INSTALL.md)`.** [Part 6.3](#63-caddy).
 
 **`caddy validate` says `input file required when there is no Caddyfile in current directory`.** Add the options:
 `caddy validate --config deploy/Caddyfile --adapter caddyfile`.
 
 **The certificate is not obtained** (no `certificate obtained successfully` in `logs/caddy.log`). Check in this
 order: the name points to your box (`getent ahosts NAME.duckdns.org`); your box has its own public IPv4 address
-(part 6.2); the forwarding of 443 to port 8443 exists, with the test of part 6.2; Freebox OS does not use 443;
+([part 6.2](#62-your-box)); the forwarding of 443 to port 8443 exists, with the test of
+[part 6.2](#62-your-box); the box itself does not use 443;
 no DMZ. Let's Encrypt limits repeated failed attempts, so correct the cause before starting Caddy again.
 
 **A caller gets an error.** The answer is JSON with a `reason`:
@@ -615,7 +618,7 @@ rm -rf snip-36-prover-backend        # about 8 GB
 ./proof-server.sh start
 ```
 
-*You should see* the four steps of part 3, ending with `RESULT: PROVING STACK READY`. If it fails, see
+*You should see* the four steps of [part 3](#3-get-the-code-and-build-the-prover), ending with `RESULT: PROVING STACK READY`. If it fails, see
 [section 8](#8-statistics-logs-and-common-problems).
 
 **Then check with a real proof.** `setup` and its final check do not run a proof, and the server depends on how

@@ -14,8 +14,58 @@ It is meant to be run by hand on a machine you control, and can be opened to the
 
 Nothing starts by itself (not at boot, not after a crash). You start and stop it with `./proof-server.sh`.
 
+**Linux only.** It relies on features of Linux (`/proc`) and was tested on Linux Mint 22.3 (Ubuntu 24.04 base).
+macOS and Windows are not supported.
+
 > **Full installation guide, step by step, from a blank Linux machine to a public HTTPS server: [INSTALL.md](INSTALL.md).**
 > This README is the reference: what each command does, the API, and the layout of the files.
+
+## Architecture
+
+```
+Internet ── your box :443 ──► Caddy (this machine :8443, HTTPS certificate)
+                                ├─ /sepolia/* ──► 127.0.0.1:4030  (instance "sepolia", public listener: key + quota)
+                                └─ /mainnet/* ──► 127.0.0.1:4031  (instance "mainnet", public listener: key + quota)
+Local network ──────────────► this machine :3030 / :3031 (LAN listeners: no key, no quota)
+                                          │
+                       queue ──► machine slot ──► snip36 prove (own process group)
+                                          │
+                                   your Starknet node of that network
+```
+
+### Processes
+
+| Process | Started by | Role |
+|---|---|---|
+| `./proof-server.sh <command>` | you | the commands; it exits when the command is done |
+| `node dist/index.js <instance>` | `start` (one per instance, in the background) | one network: its two listeners, its queue, its log; pid in `state/<instance>.pid` |
+| `caddy` | `start`, when an instance is public | HTTPS on port 8443, one route `/<instance>/*` per public instance; pid in `state/caddy.pid` |
+| `snip36 prove virtual-os` | an instance, for each proof | the prover, in its own process group with its runner (port 9900 + slot number); the whole group is stopped together |
+
+The two listeners of an instance are chosen by the socket a request arrives on, never by a header: the LAN listener
+on `LAN_PORT` of all IPv4 addresses and of `::1` (private callers only), the public listener on `127.0.0.1:PUBLIC_PORT` (Caddy only).
+
+The **machine slots** are shared by all instances: a slot is held by binding the port 9800 + slot number on
+`127.0.0.1`, which the system frees when the holder dies, so a crashed instance never keeps its slot. With
+`machineSlots` = 1, the machine runs one proof at a time, whatever the number of instances.
+
+### Life of a request
+
+1. The listener receives `POST /prove`. On the public listener, the key is checked (`401`, `403 banned` after too many
+   wrong keys), then the site's permission for this network (`403`).
+2. The body is checked: size, JSON, fields of a V3 `INVOKE` transaction (`413`, `400`). Only the known fields are
+   kept.
+3. Admission, public requests only: daily quota, requests of the site, queue length, estimated wait (`429`, `503`).
+   Local requests are never refused for load.
+4. The request enters the queue (local requests first) and receives `queued` events with its position and estimated
+   wait.
+5. When a machine slot is free, the instance writes the transaction to a private file in `tmp/<instance>/`, runs
+   `snip36 prove virtual-os` at the requested block against its node, and sends `started`.
+6. At the end, it reads the files the prover wrote, deletes them, and sends `done` with the proof, or `error` with a
+   cleaned reason. The log gets one line per step (`request`, `queued`, `start`, `done`, `fail`…), never the
+   transaction.
+
+`config/sites.json` is read again within 5 seconds of a change; the instance files are read only at start.
 
 ## Quick start (local network only)
 
@@ -64,9 +114,19 @@ last lines say why; the failures already met are in [INSTALL.md, section 8](INST
 ### `start [<instance>|all]`
 
 Starts the instance (or all of them) in the background, then waits up to 60 seconds for it to answer. Before it
-starts serving, the instance checks that `snip36` is built, that its node answers, **that the node is on the
-network the file says** (`NETWORK`), and that its ports are free. If a check fails, the instance does not start
-and the reason is printed. On success:
+starts serving, the instance checks that:
+
+- `snip36` is built (`setup` was run);
+- `config/sites.json` is valid when it exists (without it: no site, default limits);
+- its node answers, at `STARKNET_RPC_URL` of `instances/<instance>.env`;
+- **the node is on the network set by `NETWORK`** in the same file: the instance asks the node for its chain ID
+  (`starknet_chainId`) and compares it with the one of that network (`SN_SEPOLIA` or `SN_MAIN`). A node of the other
+  network would give proofs that are useless on-chain;
+- its ports are free.
+
+If a check fails, the instance does not start and the reason is printed, for instance
+`node http://127.0.0.1:6060/v0_10 is on SN_MAIN, but instances/sepolia.env says NETWORK=sepolia (SN_SEPOLIA)`.
+On success:
 
 ```
 sepolia: running (pid 1263179) — LAN http://192.168.1.26:3030, public 127.0.0.1:4030
@@ -74,7 +134,7 @@ caddy: running (pid 1263186)
 ```
 
 When at least one started instance has `PUBLIC_ENABLED=true`, Caddy is started too (it needs `deploy/Caddyfile`:
-see `caddyfile`). A proof left behind by a server that died is stopped first. Starting an instance that is already
+see [`caddyfile`](#caddyfile---domain-name)). A proof left behind by a server that died is stopped first. Starting an instance that is already
 running changes nothing.
 
 ### `stop [<instance>|all]`
@@ -87,7 +147,7 @@ is public and running.
 ### `restart [<instance>|all]`
 
 `stop`, then `start`, with the same arguments. Needed after editing `instances/<name>.env` (the instance files are
-read at start; `config/sites.json` is not concerned, see `site`).
+read at start; `config/sites.json` is not concerned, see [`site`](#site-command)).
 
 ### `status`
 
@@ -275,9 +335,9 @@ is reserved). Start from [instances/example.env](instances/example.env).
 |---|---|---|
 | `NETWORK` | `mainnet` or `sepolia`; must be the network of the node | required |
 | `STARKNET_RPC_URL` | JSON-RPC address of your node, spec 0.10 | required |
-| `LAN_PORT` | LAN listener | required |
+| `LAN_PORT` | port of the LAN listener: a free port of your choice (e.g. `3030`, `3031` for a second instance); the one clients of your local network call | required |
 | `PUBLIC_ENABLED` | `true` opens the public listener | `false` |
-| `PUBLIC_PORT` | public listener, on `127.0.0.1` | required when public |
+| `PUBLIC_PORT` | port of the public listener: a free port of your choice (e.g. `4030`), different from `LAN_PORT`. Bound to `127.0.0.1`, so only Caddy reaches it; `caddyfile` reads it (run it again after a change). Never forward it on your box | required when public |
 | `LOG_MAX_MB`, `LOG_FILES` | size of a log file, number of old files kept | 5, 3 |
 | `SNIP36_BINARY` | another `snip36` program | the one built by `setup` |
 

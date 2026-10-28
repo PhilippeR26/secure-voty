@@ -22,7 +22,7 @@ In this demo, both servers run locally:
 - Approximately 4 GB of free RAM (2 GB for the proof server).
 - About 10 GB of storage (mainly for the proof server).
 - The more powerful your PC, the faster the proof generation.
-- For the proof server: Node.js 22 or newer, Rust stable and Python 3.12. The Rust nightly toolchain that the prover also needs is installed by `./proof-server.sh setup` (see [proofServer/INSTALL.md](proofServer/INSTALL.md)).
+- For the proof server (**Linux only**): Node.js 22 or newer, Rust stable and Python 3.12. The Rust nightly toolchain that the prover also needs is installed by `./proof-server.sh setup` (see [proofServer/INSTALL.md](proofServer/INSTALL.md)).
 - A Starknet RPC node — required for state reads before proof generation. For Pathfinder, v0.22.2 minimum.
 - Your contract has to be compiled with Cairo 2.17.0-rc.4 minimum. 
 
