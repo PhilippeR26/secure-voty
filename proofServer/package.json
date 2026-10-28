@@ -1,10 +1,12 @@
 {
   "name": "snip36-server",
-  "version": "1.0.0",
+  "version": "2.0.0",
+  "private": true,
+  "engines": { "node": ">=22" },
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "tsx watch src/index.ts"
+    "build": "rm -rf dist && tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test --test-concurrency=1 \"test/**/*.test.ts\""
   },
   "dependencies": {
     "dotenv": "^17.4.1",

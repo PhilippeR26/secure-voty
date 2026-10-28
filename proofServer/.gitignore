@@ -11,3 +11,11 @@ tmp/
 *.cache
 *.TAG
 
+# proof server v2: machine-specific files
+instances/*.env
+!instances/example.env
+config/sites.json
+state/
+logs/
+deploy/Caddyfile
+
