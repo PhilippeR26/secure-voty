@@ -129,7 +129,7 @@ If a check fails, the instance does not start and the reason is printed, for ins
 On success:
 
 ```
-sepolia: running (pid 1263179) — LAN http://192.168.1.26:3030, public 127.0.0.1:4030
+sepolia: running (pid 1263179) — LAN http://192.168.1.xx:3030, public 127.0.0.1:4030
 caddy: running (pid 1263186)
 ```
 

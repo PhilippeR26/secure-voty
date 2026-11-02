@@ -205,7 +205,7 @@ Start it:
 *You should see:*
 
 ```
-sepolia: running (pid 1254993) — LAN http://192.168.1.26:3030, public off
+sepolia: running (pid 1254993) — LAN http://192.168.1.xx:3030, public off
 ```
 
 Check it:
@@ -215,7 +215,7 @@ curl http://127.0.0.1:3030/health
 ```
 
 *You should see:* `{"ok":true,"network":"sepolia","queueLength":0,"running":0}`. From another computer of your
-network, use the address printed by `start` (here `192.168.1.26`) instead of `127.0.0.1`.
+network, use the address printed by `start` (here `192.168.1.xx`) instead of `127.0.0.1`.
 
 *If `start` fails*, it prints why. The usual causes are in [section 8](#8-statistics-logs-and-common-problems):
 the node is not reachable, the node is on another network than `NETWORK`, a port is already used.
@@ -224,7 +224,7 @@ To use it from the DAPP of this repository, put in its `.env` (this variable is 
 the same machine: the default is `http://localhost:3030`):
 
 ```
-PROOF_SERVER_URL=http://192.168.1.26:3030
+PROOF_SERVER_URL=http://<lan-ip>:3030
 ```
 
 > **Never forward the LAN ports (3030, 3031…) on your box.** They have no key and no quota: anybody who can

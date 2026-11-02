@@ -63,9 +63,14 @@ cp instances/example.env instances/sepolia.env   # then edit it, see below
 >
 > The voting contract is deployed on Sepolia, the virtual transaction is signed for the Sepolia chain ID, and the proof server reads the Sepolia state at the block chosen by the DAPP. The server refuses to start when its node is not on the network named by `NETWORK`.
 
-The DAPP and the scripts find the proof server through two variables of their `.env` (see `.env-example`):
-- `PROOF_SERVER_URL`: by default `http://localhost:3030`, the local-network port of the instance. A public instance is `https://<name>/<instance>`.
-- `PROOF_SERVER_API_KEY`: only for a public instance, the key given by its owner. The local-network port needs none.
+The DAPP and the scripts find the proof server through two variables of their `.env` (see `.env-example`). After a change, restart `npm run dev`:
+- `PROOF_SERVER_URL`: where the proof server is.
+  - on the same machine: `http://localhost:3030` (default, the local-network port of the instance);
+  - on another machine of your local network: `http://<its IP address>:3030`, no key needed;
+  - through the Internet: `https://<name>.duckdns.org/<instance>`, for example `.../sepolia`.
+- `PROOF_SERVER_API_KEY`: only for a public instance, the key given by its owner (`./proof-server.sh site add`, see the install guide). The local-network port needs none.
+
+Before a vote, the DAPP checks that the proof server answers and proves the same network as its `STARKNET_CHAIN_ID`. While the proof is made, it shows the position in the queue of the proof server. When no proof comes (daily quota reached, server busy or not answering, proof failed…), it shows the exact reason and lets the voter try again.
 
 The same installation can also be opened to the Internet, with an API key and a daily quota for each site that uses it: see [proofServer/INSTALL.md](proofServer/INSTALL.md#6-go-public-duckdns-your-box-caddy).
 

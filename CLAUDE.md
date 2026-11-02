@@ -77,11 +77,12 @@ Copy `.env-example` to `.env` at project root and fill in:
 User (browser)
   → [Email.tsx] enters email + secret + vote choice
   → Server Action [voterProofs.ts] checks Merkle whitelist, returns leaf + proof
-  → Server Action [getSNProof.ts]:
-      1. builds calldata for create_proof()
-      2. calls account.getSignedTransaction() — from starknet.js ≥ 11.3.0
-      3. POSTs tx to the proof server (`PROOF_SERVER_URL`) via SSE stream
-      4. returns { proof, proofFacts, l2ToL1Messages }
+  → [utils/fetchProof.ts] POSTs { vote, round } to the Route Handler [api/prove/route.ts] (same session cookie), which answers with an SSE stream:
+      1. [checkProofServer.ts] GET /health: the proof server answers and proves the network of `STARKNET_CHAIN_ID`
+      2. [buildProofTx.ts] builds calldata for create_proof(), then account.getSignedTransaction() — from starknet.js ≥ 11.3.0
+      3. [RequestProof.ts] POSTs tx to the proof server (`PROOF_SERVER_URL`) via SSE stream; its `queued` / `started` events are relayed
+      4. sends `done` { proof, proofFacts, l2ToL1Messages }, or `error` { failure: { kind, message } } with the exact reason (quota, busy, proof failed…)
+     Closing the tab aborts the request: the proof server drops it from its queue, or stops the proof.
   → Server Action [sendVote.ts]:
       1. decodes public outputs from l2ToL1Messages payload
       2. calls account.execute(verify_vote calldata, { proof, proofFacts })

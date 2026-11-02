@@ -1,17 +1,38 @@
 "use client";
 
-import { Box, Button, Center, RadioGroup, VStack } from "@chakra-ui/react";
+import { Box, Button, Center, Link, RadioGroup, VStack } from "@chakra-ui/react";
 import { useStoreChoice } from "./contextChoice";
 import { useRef, useState } from "react";
 import { Toaster, toaster } from "@/components/ui/toaster"
 import { CallData } from "starknet";
-import type { L1L2message, ProveResult, PublicInputsForProof } from "../types";
-import { getSNProof } from "../server/getSNProof";
+import type { L1L2message, ProofProgress, ProveResult, PublicInputsForProof } from "../types";
+import { fetchProof } from "../utils/fetchProof";
+import { ProofFailureError } from "../utils/proofFailure";
 import { l1l2MessageAbi } from "../const/l1l2MessageAbi";
 import { sendVote } from "../server/sendVote";
-import { round } from "../constants";
+import { round, proverInstallGuideUrl } from "../constants";
 import Results from "./Results";
 
+
+// Text of the progress notification while the proof server works.
+function progressText(progress: ProofProgress): string {
+    if (progress.event === "started") return "Computing the proof. Please wait 40 sec...";
+    return `Waiting for the proof server: position ${progress.position}` + (progress.etaSec > 0 ? `, about ${progress.etaSec} s...` : "...");
+}
+
+// Tells the voter why no proof was obtained. When the proof server does not answer, the notification links to the guide
+// to install one.
+function showProofFailure(err: ProofFailureError) {
+    const { kind, message } = err.failure;
+    toaster.create({
+        description: kind === "unreachable"
+            ? <>{message}{" "}<Link href={proverInstallGuideUrl} target="_blank" rel="noreferrer" color="white" textDecoration="underline">Install your own proof server</Link></>
+            : message,
+        type: "error",
+        closable: true,
+        duration: Infinity,
+    });
+}
 
 export default function Choices() {
     const [value, setValue] = useState<string | null>(null);
@@ -27,67 +48,67 @@ export default function Choices() {
     ]
 
     async function handleVote() {
-        if (initialized.current) return;
+        if (initialized.current || !value) return;
         initialized.current = true;
-        if (!value) return;
         setChoice(Number(value));
-        toaster.create({
-            description: "Data preparation. Please wait 40 sec...",
-            type: "info",
-            closable: true,
-            duration: 50_000,
+        // one notification, updated at each step
+        const progressToast = toaster.create({
+            description: "Contacting the proof server...",
+            type: "loading",
         });
 
         const public_input: PublicInputsForProof = { vote: value, round };
+        let proofObtained = false;
 
         try {
-            const proofRes: ProveResult = await getSNProof(public_input);
+            const proofRes: ProveResult = await fetchProof(public_input, (progress) => {
+                toaster.update(progressToast, { description: progressText(progress), type: "loading" });
+            });
+            proofObtained = true;
             console.log("Choice1: proof size =", proofRes.proof.length, ", start =", proofRes.proof.slice(0, 8), ", end =", proofRes.proof.slice(-8));
-            if (proofRes.proof.length === 0) {
+            const messageCallData = new CallData(l1l2MessageAbi);
+            const messageContent = messageCallData.decodeParameters("l1l2message", (proofRes.l2ToL1Messages![0].payload) as string[]);
+            const messageFromProof = messageContent as L1L2message;
+
+            toaster.update(progressToast, { description: "Sending data. Please wait 30 sec...", type: "loading" });
+
+            const txR2 = await sendVote(proofRes, messageFromProof);
+            toaster.dismiss(progressToast);
+            if (txR2 !== "failed") {
+                setSuccess(true);
                 toaster.create({
-                    description: "Vote not authorized 😱 !!!",
-                    type: "error",
+                    description: "Vote successfully registered!!!",
+                    type: "info",
                     closable: true,
                     duration: undefined,
                 });
             } else {
-                const messageCallData = new CallData(l1l2MessageAbi);
-                const messageContent = messageCallData.decodeParameters("l1l2message", (proofRes.l2ToL1Messages![0].payload) as string[]);
-                const messageFromProof = messageContent as L1L2message;
-
                 toaster.create({
-                    description: "Sending data. Please wait 30 sec...",
-                    type: "info",
+                    description: "Vote failed 😱 !!!",
+                    type: "error",
                     closable: true,
-                    duration: 50_000,
+                    duration: undefined,
                 });
-
-                const txR2 = await sendVote(proofRes, messageFromProof);
-                if (txR2 !== "failed") {
-                    setSuccess(true);
-                    toaster.create({
-                        description: "Vote successfully registered!!!",
-                        type: "info",
-                        closable: true,
-                        duration: undefined,
-                    });
-                } else {
-                    toaster.create({
-                        description: "Vote failed 😱 !!!",
-                        type: "error",
-                        closable: true,
-                        duration: undefined,
-                    });
-                }
             }
         } catch (err) {
-            console.error(err);
-            toaster.create({
-                description: "Error when processing!!!",
-                type: "error",
-                closable: true,
-                duration: 20_000,
-            });
+            toaster.dismiss(progressToast);
+            if (err instanceof ProofFailureError) {
+                console.error(err.message);
+                showProofFailure(err);
+            } else {
+                console.error(err);
+                toaster.create({
+                    description: "Error when processing!!!",
+                    type: "error",
+                    closable: true,
+                    duration: 20_000,
+                });
+            }
+            // Without a proof nothing was sent to the blockchain: the voter can try again.
+            if (!proofObtained) {
+                initialized.current = false;
+                setChoice(undefined);
+            }
         }
     };
 

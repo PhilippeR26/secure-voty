@@ -37,3 +37,25 @@ export type ProveResult = {
       nullifier: BigNumberish,
       vote: BigNumberish,
     }
+
+// Why no proof could be obtained. `message` is meant for the voter; `retryAfterSec` says when to try again.
+export type ProofFailureKind =
+    | "no_session"
+    | "unreachable"
+    | "network_mismatch"
+    | "refused"
+    | "quota"
+    | "busy"
+    | "proof_failed"
+    | "internal";
+
+export type ProofFailure = {
+    kind: ProofFailureKind;
+    message: string;
+    retryAfterSec?: number;
+};
+
+// Progress of a request on the proof server: its place in the queue, then the start of the proof.
+export type ProofProgress =
+    | { event: "queued"; position: number; etaSec: number }
+    | { event: "started" };

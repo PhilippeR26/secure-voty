@@ -1,16 +1,23 @@
-"use server";
-
 import { Account, Contract, RpcProvider, type Abi } from "starknet";
-import type { PrivateInputsForProof, ProveResult, PublicInputsForProof } from "../types";
+import type { PrivateInputsForProof, PublicInputsForProof } from "../types";
 import type { INVOKE_TXN_V3 } from "@starknet-io/starknet-types-0101";
-import { requestProof } from "./RequestProof";
 import { votyContractAddress } from "../constants";
+import { ProofFailureError } from "../utils/proofFailure";
 import { verifySession } from "./session";
 import { checkWhitelist } from "./voterProofs";
 
-
-export async function getSNProof(publicData: PublicInputsForProof): Promise<ProveResult> {
-    const session = await verifySession();
+// Builds the create_proof() transaction of the voter of the current session, signed but not broadcast, and the
+// block it will be executed against. Server side only: it uses the key of the DAPP account.
+export async function buildProofTx(publicData: PublicInputsForProof): Promise<{ tx: INVOKE_TXN_V3; currentBlock: number }> {
+    let session: Awaited<ReturnType<typeof verifySession>>;
+    try {
+        session = await verifySession();
+    } catch (err) {
+        throw new ProofFailureError(`Session refused: ${(err as Error).message}`, {
+            kind: "no_session",
+            message: "Your session expired: enter your email and secret again.",
+        });
+    }
 
     const proofData = await checkWhitelist(session.emailEncoded);
     const privateData: PrivateInputsForProof = {
@@ -32,16 +39,5 @@ export async function getSNProof(publicData: PublicInputsForProof): Promise<Prov
     const tx: INVOKE_TXN_V3 = await account0.getSignedTransaction(myCalldata);
 
     const currentBlock: number = await myProvider.getBlockNumber();
-    try {
-        const proofRes: ProveResult = await requestProof(currentBlock, tx);
-        console.log("getSNproof: proof size =", proofRes.proof.length, ", start =", proofRes.proof.slice(0, 8), ", end =", proofRes.proof.slice(-8));
-        return proofRes;
-    } catch (err) {
-        console.error("getSNProof error:", err);
-        return {
-            proof: "",
-            proofFacts: [],
-            l2ToL1Messages: [],
-        };
-    }
+    return { tx, currentBlock };
 }

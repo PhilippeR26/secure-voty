@@ -2,7 +2,7 @@ import { create } from "zustand";
 
 interface ChoiceState {
     choice: number | undefined,
-    setChoice: (choice: number) => void,
+    setChoice: (choice: number | undefined) => void, // undefined re-opens the form after a failed vote
     email: string | undefined,
     setEmail: (email: string) => void,
     userAuthorized: boolean,
@@ -11,7 +11,7 @@ interface ChoiceState {
 
 export const useStoreChoice = create<ChoiceState>()(set => ({
     choice: undefined,
-    setChoice: (choice: number) => { set(() => ({ choice })) },
+    setChoice: (choice: number | undefined) => { set(() => ({ choice })) },
     email: undefined,
     setEmail: (email: string) => { set(() => ({ email })) },
     userAuthorized: false,

@@ -11,7 +11,7 @@ import * as Merkle from "starknet-merkle-tree";
 
 import fs from "fs";
 import * as dotenv from "dotenv";
-import { account1BraavosSepoliaAddress, account1BraavosSepoliaPrivateKey, account3ArgentXSepoliaAddress, account3ArgentXSepoliaPrivateKey, accountSTRKoz20snip9Address, accountSTRKoz20snip9PrivateKey, alchemyKey } from "./secretNetwork";
+import { account1BraavosSepoliaAddress, account1BraavosSepoliaPrivateKey, account3ArgentXSepoliaAddress, account3ArgentXSepoliaPrivateKey, accountSTRKoz20snip9Address, accountSTRKoz20snip9PrivateKey, alchemyKey, localSepoliaNodeUrl, localSepoliaStarlinkNodeUrl, localIntegrationNodeUrl } from "./secretNetwork";
 import { l1l2MessageAbi } from "./l1l2MessageAbi";
 import { requestProof, type L1L2message, type ProveResult } from "./RequestProof";
 
@@ -33,13 +33,13 @@ async function main() {
   // }
 
   // ***** Sepolia Testnet 
-  // const myProvider = new RpcProvider({ nodeUrl: "http://192.168.1.34:9545/rpc/v0_10" }); // local Sepolia Testnet node (starlink)
-  const myProvider = new RpcProvider({ nodeUrl: "http://192.168.1.26:9545/rpc/v0_10" }); // local Sepolia Testnet node (FreeBox, wire)
+  // const myProvider = new RpcProvider({ nodeUrl: localSepoliaStarlinkNodeUrl + "/rpc/v0_10" }); // local Sepolia Testnet node (starlink)
+  const myProvider = new RpcProvider({ nodeUrl: localSepoliaNodeUrl + "/rpc/v0_10" }); // local Sepolia Testnet node (FreeBox, wire)
   // const myProvider = new RpcProvider({ nodeUrl: "https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_10/" + alchemyKey });
 
   // ****** Starknet v0.14.2 integration Sepolia
   // const myProvider = new RpcProvider({ nodeUrl: AdrienIntegrationUrl });
-  // const myProvider = new RpcProvider({ nodeUrl: "http://192.168.1.26:9550/rpc/v0_10" }); // local Sepolia Integration node (Freebox)
+  // const myProvider = new RpcProvider({ nodeUrl: localIntegrationNodeUrl + "/rpc/v0_10" }); // local Sepolia Integration node (Freebox)
 
   // ***** Mainnet
   // const myProvider = new RpcProvider({ nodeUrl: "https://starknet-mainnet.g.alchemy.com/starknet/version/rpc/v0_10/" + alchemyKey }); 

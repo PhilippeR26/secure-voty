@@ -4,7 +4,7 @@
 // Coded with Starknet.js v10.0.0 & Pathfinder v0.22.0
 
 import { RpcProvider, Account, Contract, json, CallData, config, type CairoAssembly, type CompiledSierra, CairoBytes31, extractContractHashes } from "starknet";
-import { account1BraavosSepoliaAddress, account1BraavosSepoliaPrivateKey, accountSTRKoz20snip9Address, accountSTRKoz20snip9PrivateKey, alchemyKey } from "./secretNetwork";
+import { account1BraavosSepoliaAddress, account1BraavosSepoliaPrivateKey, accountSTRKoz20snip9Address, accountSTRKoz20snip9PrivateKey, alchemyKey, localSepoliaNodeUrl, localSepoliaStarlinkNodeUrl } from "./secretNetwork";
 // import { account1BraavosMainnetAddress, account1BraavosMainnetPrivateKey, alchemyKey, infuraKey } from "../A-MainPriv/mainPriv";
 import { DevnetProvider } from "starknet-devnet";
 import * as Merkle from "starknet-merkle-tree";
@@ -29,8 +29,8 @@ async function main() {
   // }
 
   // ***** Sepolia Testnet 
-  // const myProvider = new RpcProvider({ nodeUrl: "http://192.168.1.34:9545/rpc/v0_9" }); // local Sepolia Testnet node (starlink)
-  const myProvider = new RpcProvider({ nodeUrl: "http://192.168.1.26:9545/rpc/v0_10" }); // local Sepolia Testnet node (free, wire)
+  // const myProvider = new RpcProvider({ nodeUrl: localSepoliaStarlinkNodeUrl + "/rpc/v0_9" }); // local Sepolia Testnet node (starlink)
+  const myProvider = new RpcProvider({ nodeUrl: localSepoliaNodeUrl + "/rpc/v0_10" }); // local Sepolia Testnet node (free, wire)
   // const myProvider = new RpcProvider({ nodeUrl: "https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_10/" + alchemyKey });
 
   // ****** Starknet v0.14.2 integration Sepolia

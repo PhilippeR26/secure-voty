@@ -7,8 +7,8 @@ import { requestProof as dappRequestProof } from "../../src/app/server/RequestPr
 import { FAKE_OUT } from "./helpers/fake";
 import { TEST_KEY, TestServer, startTestServer } from "./helpers/server";
 
-// The real clients of the DAPP and of the scripts, run against the real server. They have no import that runs:
-// their only imports are types.
+// The real clients of the DAPP and of the scripts, run against the real server. The client of the scripts has no
+// import that runs; the one of the DAPP imports only two small modules of src/app/utils (no Next.js, no Starknet node).
 const tx = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures", "tx.json"), "utf8"));
 type Client = (block: number, tx: never) => Promise<unknown>;
 const clients: Array<[string, Client]> = [
