@@ -123,6 +123,7 @@ This is a demo. So, some security problems are acceptable for pedagogical purpos
 ## Rules
 
 - **No auto-commits.** The user handles all git commits. Never run `git commit` or `git add` without explicit instruction.
+- **Read-only git is allowed without asking** on this repo: `status`, `log`, `diff`, `show`, `branch` (listing only), `blame`, `ls-files`, `check-ignore`, `remote -v`, `rev-parse`. Anything that changes the repository, the index, the working tree or the refs (`add`, `commit`, `merge`, `rebase`, `reset`, `checkout`/`switch`, `stash`, `tag`, `fetch`, `pull`, `push`) still needs an explicit instruction.
 - Language: English in all code comments, and UI strings. In Claude conversations, speak French.
 - No write in issues or PRs.
 - **[Not validated] label:** Any claim not directly confirmed by reading the codebase, running a command, or verified documentation MUST be prefixed with **[Not validated]**. This includes function names, API signatures, file paths, and behavior descriptions.
