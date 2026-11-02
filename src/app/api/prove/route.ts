@@ -3,16 +3,30 @@ import { ProofFailureError } from "../../utils/proofFailure";
 import { buildProofTx } from "../../server/buildProofTx";
 import { checkProofServer } from "../../server/checkProofServer";
 import { requestProof } from "../../server/RequestProof";
+import { verifySession } from "../../server/session";
+import { ensureRoundOpen } from "../../server/votingRound";
 
 const PING_MS = 15_000;
 
-function publicDataFrom(body: unknown): PublicInputsForProof {
-    const { vote, round } = (body ?? {}) as { vote?: unknown; round?: unknown };
-    const isNumeric = (value: unknown): value is string | number => typeof value === "string" || typeof value === "number";
-    if (!isNumeric(vote) || !isNumeric(round)) {
+// The round is not read from the request: it is the one of the session, drawn by the server at login.
+function voteFrom(body: unknown): PublicInputsForProof["vote"] {
+    const { vote } = (body ?? {}) as { vote?: unknown };
+    if (typeof vote !== "string" && typeof vote !== "number") {
         throw new ProofFailureError("Invalid request body", { kind: "internal", message: "Unexpected error: invalid request." });
     }
-    return { vote, round };
+    return vote;
+}
+
+// The voter of the session cookie. A missing or expired session is a failure to tell the voter about.
+async function sessionOf(): Promise<Awaited<ReturnType<typeof verifySession>>> {
+    try {
+        return await verifySession();
+    } catch (err) {
+        throw new ProofFailureError(`Session refused: ${(err as Error).message}`, {
+            kind: "no_session",
+            message: "Your session expired: enter your email and secret again.",
+        });
+    }
 }
 
 // What the voter is told about an error. The technical details stay in the log of the DAPP server: they can hold the
@@ -26,8 +40,9 @@ function failureOf(err: unknown): ProofFailure {
     return { kind: "internal", message: "Unexpected error: see the log of the DAPP server." };
 }
 
-// POST { vote, round } -> server-sent events: "queued" and "started" while the proof server works, then "done" (the
-// proof) or "error" ({ failure }). The voter is the one of the session cookie.
+// POST { vote } -> server-sent events: "opening" if the round of the session is not open yet, "queued" and "started"
+// while the proof server works, then "done" (the proof) or "error" ({ failure }). The voter and the round are the ones
+// of the session cookie.
 export async function POST(request: Request): Promise<Response> {
     const encoder = new TextEncoder();
     const browserLeft = new AbortController(); // the browser closed the stream: withdraw the request from the proof server
@@ -48,9 +63,12 @@ export async function POST(request: Request): Promise<Response> {
             ping = setInterval(() => send(": ping\n\n"), PING_MS);
             const signal = AbortSignal.any([request.signal, browserLeft.signal]);
             try {
-                const publicData = publicDataFrom(await request.json().catch(() => undefined));
+                const vote = voteFrom(await request.json().catch(() => undefined));
                 await checkProofServer(signal);
-                const { tx, currentBlock } = await buildProofTx(publicData);
+                const session = await sessionOf();
+                // The round was sent to the blockchain at login; wait for it only if it is not open yet.
+                await ensureRoundOpen(session.round, session.openTxHash, () => sendEvent("opening", { event: "opening" }));
+                const { tx, currentBlock } = await buildProofTx(session, vote);
                 const proof = await requestProof(currentBlock, tx, {
                     signal,
                     onProgress: (progress) => sendEvent(progress.event, progress),

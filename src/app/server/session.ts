@@ -9,6 +9,8 @@ const SESSION_TTL_S = 7200; // 2 hours
 interface SessionData {
     emailEncoded: string;
     secret: string;
+    round: number; // voting round of this session, drawn at login
+    openTxHash?: string; // open_round() transaction sent at login, if it could be sent
     exp: number;
 }
 
@@ -18,10 +20,12 @@ function sign(payload: string): string {
         .digest("base64url");
 }
 
-export async function createSession(emailEncoded: string, secret: string): Promise<void> {
+export async function createSession(emailEncoded: string, secret: string, round: number, openTxHash?: string): Promise<void> {
     const data: SessionData = {
         emailEncoded,
         secret,
+        round,
+        openTxHash,
         exp: Math.floor(Date.now() / 1000) + SESSION_TTL_S,
     };
     const payload = Buffer.from(JSON.stringify(data)).toString("base64url");
@@ -57,6 +61,8 @@ export async function verifySession(): Promise<SessionData> {
     if (data.exp < Math.floor(Date.now() / 1000)) {
         throw new Error("Session expired");
     }
+    // A cookie issued before the rounds were drawn at login has no round: the voter has to log in again.
+    if (typeof data.round !== "number") throw new Error("Session without round");
 
     return data;
 }

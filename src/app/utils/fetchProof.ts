@@ -1,12 +1,13 @@
-import type { ProofFailure, ProofProgress, ProveResult, PublicInputsForProof } from "../types";
+import type { ProofFailure, ProofProgress, ProveResult } from "../types";
 import { ProofFailureError } from "./proofFailure";
 import { readSseStream } from "./sseStream";
 
-// Browser side: asks the DAPP server (route /api/prove) for the proof of a vote. onProgress is called with the
-// place in the queue of the proof server, then when the proof starts. Throws a ProofFailureError whose `failure`
-// says what to tell the voter.
+// Browser side: asks the DAPP server (route /api/prove) for the proof of a vote. The round is not sent: the server takes
+// it from the session. onProgress is called while the round of the voter is being opened on the blockchain, with the
+// place in the queue of the proof server, then when the proof starts. Throws a ProofFailureError whose `failure` says
+// what to tell the voter.
 export async function fetchProof(
-    publicData: PublicInputsForProof,
+    vote: string | number,
     onProgress: (progress: ProofProgress) => void,
 ): Promise<ProveResult> {
     let response: Response;
@@ -14,7 +15,7 @@ export async function fetchProof(
         response = await fetch("/api/prove", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(publicData),
+            body: JSON.stringify({ vote }),
         });
     } catch (err) {
         throw new ProofFailureError(`Cannot reach /api/prove: ${err instanceof Error ? err.message : String(err)}`, {
@@ -32,7 +33,7 @@ export async function fetchProof(
     let failure: ProofFailure | undefined;
     try {
         await readSseStream(response.body, (event, data) => {
-            if (event === "queued" || event === "started") onProgress(data as ProofProgress);
+            if (event === "opening" || event === "queued" || event === "started") onProgress(data as ProofProgress);
             if (event === "done") proof = data as ProveResult;
             if (event === "error") failure = (data as { failure: ProofFailure }).failure;
         });

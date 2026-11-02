@@ -3,6 +3,7 @@
 import { CairoBytes31 } from "starknet";
 import { checkWhitelist, checkSecret } from "./voterProofs";
 import { createSession } from "./session";
+import { openRound, randomRound } from "./votingRound";
 
 export type AuthResult = {
     isWhiteListed: boolean;
@@ -17,7 +18,16 @@ export async function authenticate(email: string, secret: string): Promise<AuthR
     }
     const secretValid = await checkSecret(emailEncoded, secret);
     if (secretValid) {
-        await createSession(emailEncoded, secret);
+        // Demo: each login votes in a round of its own, opened on-chain here (normally done by an admin).
+        const round = randomRound();
+        let openTxHash: string | undefined;
+        try {
+            openTxHash = await openRound(round);
+        } catch (err) {
+            // Not blocking: ensureRoundOpen() opens the round when the voter votes.
+            console.error("authenticate: open_round not sent:", err);
+        }
+        await createSession(emailEncoded, secret, round, openTxHash);
     }
     return { isWhiteListed: true, secretValid };
 }

@@ -2,23 +2,17 @@ import { Account, Contract, RpcProvider, type Abi } from "starknet";
 import type { PrivateInputsForProof, PublicInputsForProof } from "../types";
 import type { INVOKE_TXN_V3 } from "@starknet-io/starknet-types-0101";
 import { votyContractAddress } from "../constants";
-import { ProofFailureError } from "../utils/proofFailure";
-import { verifySession } from "./session";
+import type { verifySession } from "./session";
 import { checkWhitelist } from "./voterProofs";
 
-// Builds the create_proof() transaction of the voter of the current session, signed but not broadcast, and the
-// block it will be executed against. Server side only: it uses the key of the DAPP account.
-export async function buildProofTx(publicData: PublicInputsForProof): Promise<{ tx: INVOKE_TXN_V3; currentBlock: number }> {
-    let session: Awaited<ReturnType<typeof verifySession>>;
-    try {
-        session = await verifySession();
-    } catch (err) {
-        throw new ProofFailureError(`Session refused: ${(err as Error).message}`, {
-            kind: "no_session",
-            message: "Your session expired: enter your email and secret again.",
-        });
-    }
-
+// Builds the create_proof() transaction of the voter of the session (already verified by the caller), signed but not
+// broadcast, and the block it will be executed against. The round is the one of the session. Server side only: it uses
+// the key of the DAPP account.
+export async function buildProofTx(
+    session: Awaited<ReturnType<typeof verifySession>>,
+    vote: PublicInputsForProof["vote"],
+): Promise<{ tx: INVOKE_TXN_V3; currentBlock: number }> {
+    const publicData: PublicInputsForProof = { vote, round: session.round };
     const proofData = await checkWhitelist(session.emailEncoded);
     const privateData: PrivateInputsForProof = {
         member_leaf: proofData.leafHash,

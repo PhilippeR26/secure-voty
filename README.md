@@ -87,11 +87,10 @@ Open http://localhost:3000
 Make sure you have about 4 GB of RAM available.
 
 **You can test the demo using the email address `you@outlook.com` and the user secret `12345678`.**
-In `src/app/constants.ts` , select a round number not yet used (for example a large random number).
+Each login draws a random voting round and opens it on the blockchain, so you can vote again by refreshing the page and logging in again. There is no round to choose.
 
-> [!IMPORTANT]
-> After changing the round number, stop the dev server and restart it with `npm run dev`. The round is opened on-chain by [`src/instrumentation.ts`](src/instrumentation.ts), which runs only once at server startup: hot reload picks up the new number but does not open the round, and voting then fails with `Vote is not open`.  
-> Wait for `Round opened successfully` in the terminal before voting.
+> [!NOTE]
+> Opening a round costs one transaction at each login, paid by the account of the DAPP. If you vote before this transaction is in a block, the notification first shows `Opening your voting round on the blockchain...`.
 
 ## Concept of Usage
 
@@ -181,7 +180,7 @@ struct PrivateInputsForProof {
 ```
 
 `member_leaf` and `merkle_proof` are provided by the Merkle tree backend.  
-`vote` and `round` are provided by the frontend.
+`vote` is provided by the frontend. `round` is drawn by the backend at login and kept in the session.
 
 The transaction is built using a special fork of starknet.js. See the implementation in [this script](./scripts/src/3.createTxProof.ts):
 

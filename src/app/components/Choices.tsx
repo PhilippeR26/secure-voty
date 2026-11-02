@@ -5,17 +5,18 @@ import { useStoreChoice } from "./contextChoice";
 import { useRef, useState } from "react";
 import { Toaster, toaster } from "@/components/ui/toaster"
 import { CallData } from "starknet";
-import type { L1L2message, ProofProgress, ProveResult, PublicInputsForProof } from "../types";
+import type { L1L2message, ProofProgress, ProveResult } from "../types";
 import { fetchProof } from "../utils/fetchProof";
 import { ProofFailureError } from "../utils/proofFailure";
 import { l1l2MessageAbi } from "../const/l1l2MessageAbi";
 import { sendVote } from "../server/sendVote";
-import { round, proverInstallGuideUrl } from "../constants";
+import { proverInstallGuideUrl } from "../constants";
 import Results from "./Results";
 
 
 // Text of the progress notification while the proof server works.
 function progressText(progress: ProofProgress): string {
+    if (progress.event === "opening") return "Opening your voting round on the blockchain...";
     if (progress.event === "started") return "Computing the proof. Please wait 40 sec...";
     return `Waiting for the proof server: position ${progress.position}` + (progress.etaSec > 0 ? `, about ${progress.etaSec} s...` : "...");
 }
@@ -57,11 +58,10 @@ export default function Choices() {
             type: "loading",
         });
 
-        const public_input: PublicInputsForProof = { vote: value, round };
         let proofObtained = false;
 
         try {
-            const proofRes: ProveResult = await fetchProof(public_input, (progress) => {
+            const proofRes: ProveResult = await fetchProof(value, (progress) => {
                 toaster.update(progressToast, { description: progressText(progress), type: "loading" });
             });
             proofObtained = true;

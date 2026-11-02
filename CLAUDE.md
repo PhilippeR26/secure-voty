@@ -75,13 +75,17 @@ Copy `.env-example` to `.env` at project root and fill in:
 
 ```
 User (browser)
-  → [Email.tsx] enters email + secret + vote choice
-  → Server Action [voterProofs.ts] checks Merkle whitelist, returns leaf + proof
-  → [utils/fetchProof.ts] POSTs { vote, round } to the Route Handler [api/prove/route.ts] (same session cookie), which answers with an SSE stream:
+  → [Email.tsx] enters email + secret
+  → Server Action [authenticate.ts] checks the Merkle whitelist ([voterProofs.ts]) and the secret, draws a random round
+    (demo: each login votes in a round of its own), sends open_round() without waiting for its block ([votingRound.ts]),
+    and keeps the round and the hash of that transaction in the signed session cookie
+  → [Choices.tsx] the voter picks a choice
+  → [utils/fetchProof.ts] POSTs { vote } to the Route Handler [api/prove/route.ts] (same session cookie, which holds the round), which answers with an SSE stream:
       1. [checkProofServer.ts] GET /health: the proof server answers and proves the network of `STARKNET_CHAIN_ID`
-      2. [buildProofTx.ts] builds calldata for create_proof(), then account.getSignedTransaction() — from starknet.js ≥ 11.3.0
-      3. [RequestProof.ts] POSTs tx to the proof server (`PROOF_SERVER_URL`) via SSE stream; its `queued` / `started` events are relayed
-      4. sends `done` { proof, proofFacts, l2ToL1Messages }, or `error` { failure: { kind, message } } with the exact reason (quota, busy, proof failed…)
+      2. [votingRound.ts] ensureRoundOpen(): if the round is not open in the latest block, sends `opening` and waits for the login transaction (sends open_round() again if it was lost)
+      3. [buildProofTx.ts] builds calldata for create_proof(), then account.getSignedTransaction() — from starknet.js ≥ 11.3.0
+      4. [RequestProof.ts] POSTs tx to the proof server (`PROOF_SERVER_URL`) via SSE stream; its `queued` / `started` events are relayed
+      5. sends `done` { proof, proofFacts, l2ToL1Messages }, or `error` { failure: { kind, message } } with the exact reason (quota, busy, proof failed, round unavailable…)
      Closing the tab aborts the request: the proof server drops it from its queue, or stops the proof.
   → Server Action [sendVote.ts]:
       1. decodes public outputs from l2ToL1Messages payload
@@ -114,12 +118,12 @@ User (browser)
 
 Email: `you@outlook.com` / Secret: `12345678` (committed in `secrets.json` for demo purposes)
 
-To start a new voting round, set `round` in `src/app/constants.ts` to an unused number, then stop and restart `npm run dev`: the round is opened on-chain by `src/instrumentation.ts`, which runs only once at server startup. Hot reload alone leaves the new round closed, and `create_proof()` then fails in the proof server with `Vote is not open`.
+To vote again, refresh the page (or use another browser) and log in again: each login draws a random round (u32) and opens it on-chain, so there is no round to choose and no server restart. It costs one transaction per login, even if the voter never votes, and the rounds are never closed. `scripts/` keeps using round 0.
 
 ## specificities of this repo
 This is a demo. So, some security problems are acceptable for pedagogical purpose:
 - src/app/server/secrets.json is public in the repo.
-- the `openVote()` server action function is executed automatically at launch (not by an admin).
+- the `open_round` transaction is sent by the DAPP at each login (not by an admin).
 
 ## Rules
 

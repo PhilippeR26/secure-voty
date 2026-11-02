@@ -47,6 +47,7 @@ export type ProofFailureKind =
     | "quota"
     | "busy"
     | "proof_failed"
+    | "round_unavailable"
     | "internal";
 
 export type ProofFailure = {
@@ -55,7 +56,9 @@ export type ProofFailure = {
     retryAfterSec?: number;
 };
 
-// Progress of a request on the proof server: its place in the queue, then the start of the proof.
+// Progress of a request for a proof: the wait for the round of the voter to be open on the blockchain, its place in the
+// queue of the proof server, then the start of the proof.
 export type ProofProgress =
+    | { event: "opening" }
     | { event: "queued"; position: number; etaSec: number }
     | { event: "started" };
