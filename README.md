@@ -19,7 +19,7 @@ In this demo, both servers run locally:
 - The proof server is based on an existing repository (see below).
 
 ## Requirements
-- Approximately 4 GB of free RAM (2 GB for the proof server).
+- Approximately 5 GB of free RAM (2.5 GB for the proof server).
 - About 10 GB of storage (mainly for the proof server).
 - The more powerful your PC, the faster the proof generation.
 - For the proof server (**Linux only**): Node.js 22 or newer, Rust stable and Python 3.12. The Rust nightly toolchain that the prover also needs is installed by `./proof-server.sh setup` (see [proofServer/INSTALL.md](proofServer/INSTALL.md)).
@@ -84,7 +84,7 @@ npm install && npm run dev
 
 Open http://localhost:3000
 
-Make sure you have about 4 GB of RAM available.
+Make sure you have about 5 GB of RAM available.
 
 **You can test the demo using the email address `you@outlook.com` and the user secret `12345678`.**
 Each login draws a random voting round and opens it on the blockchain, so you can vote again by refreshing the page and logging in again. There is no round to choose.

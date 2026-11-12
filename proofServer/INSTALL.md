@@ -58,8 +58,10 @@ What you need:
 
 - A Linux machine (**Linux only**: the server uses features of Linux such as `/proc`; macOS and Windows are not
   supported). Tested: Linux Mint 22.3 (Ubuntu 24.04 base). The commands use `apt`.
-- Memory: a proof used up to **1.6 GB** (peak seen on the runner process, sampled every 2 seconds). Keep at least
-  4 GB free, more if your nodes run on the same machine.
+- Memory: a proof used up to **2.4 GB** with `snip36` v1.4.2 (peak seen on the runner process, sampled every
+  second, on a second machine: Linux Mint 21.3, 8 threads, 31 GB of RAM). With v1.3.1 it was 1.6 GB on the
+  reference machine. Keep at least 4 GB free, more if your nodes run on the same machine. Do not install v1.4.0 or
+  v1.4.1: on that second machine, a proof of v1.4.1 used 14.2 GB.
 - Disk: **8 GB** for the prover once built (7.1 GB of it in `deps/`). Keep 10 GB free.
 - Time: the build of the prover takes **20 to 30 minutes** on a 16-core machine.
 - One Starknet node per network you want to serve, with a JSON-RPC **0.10** address. Tested: Pathfinder
@@ -67,8 +69,9 @@ What you need:
   state reads and transaction checks only: a complete proof on mainnet has not been tried).
 - For parts 5 to 7 only: a box that can forward a port, and an email address or account to sign in to DuckDNS.
 
-A proof took 38 to 49 seconds and used about 30% of the processor of the machine. The server runs **one proof at
-a time**; the other requests wait in a queue.
+A proof took 38 to 49 seconds and used about 30% of the processor of the machine (`snip36` v1.3.1). With v1.4.2,
+the one proof measured, on the second machine, took 42 seconds. The server runs **one proof at a time**; the other
+requests wait in a queue.
 
 ## 2. Prerequisites
 
@@ -594,17 +597,18 @@ git -C snip-36-prover-backend ls-remote --tags --sort=-v:refname origin 'v*' | h
 *You should see* the version you have, then the three latest ones (commit number, then the name):
 
 ```
-v1.3.1
-46ad98b8099ca6e1787a008c566a1138ba115fc6	refs/tags/v1.3.1
-077ff27a028e52a8b0595d21adf34b59a5c84fb5	refs/tags/v1.3.0
-6c6dedde48b5986a48b2a6843fad2d335e6ddcca	refs/tags/v1.2.5
+v1.4.2
+3a2bc73774eca3d96052db937a98c95057fef661	refs/tags/v1.4.2^{}
+02703a58e6bb91535a30632bdcb54199f0a50dd5	refs/tags/v1.4.2
+4b0209c77dbdcee7a7b443d1ac1ca309af6ff9eb	refs/tags/v1.4.1
 ```
 
-(Seen on 2026-10-28: the version installed here, `v1.3.1`, was the latest.) If your version is the first of the
-list, you are up to date.
+(Seen on 2026-11-12, when `v1.4.2` was the latest. A version can take two lines, one of them ending with `^{}`:
+it is the same version.) If your version is the first of the list, you are up to date.
 
-*Do not update without a reason.* `v1.3.1` is the version this server was tested with: real proofs of 38 to 49
-seconds on Sepolia. Good reasons are a fix you need, or a Starknet network upgrade after which the proofs of an older
+*Do not update without a reason.* `v1.4.2` is the version this server was tested with: a real vote of the DAPP on
+Sepolia, proved in 42 seconds and accepted on-chain. Its proofs are of version `PROOF2`; those of v1.3.x were
+`PROOF1`. Starknet 0.14.4 accepts both, Starknet 0.14.5 accepts `PROOF2` only. Good reasons are a fix you need, or a Starknet network upgrade after which the proofs of an older
 version are refused on-chain. The "Networks" table in the README of the prover gives, for each network, the last
 version that passed a real on-chain test; it can be behind the newest release.
 
@@ -634,7 +638,7 @@ Two variants:
 
   ```bash
   git clone https://github.com/starknet-innovation/snip-36-prover-backend snip-36-prover-backend
-  git -C snip-36-prover-backend checkout v1.3.1
+  git -C snip-36-prover-backend checkout v1.4.2
   ./proof-server.sh setup
   ```
 

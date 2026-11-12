@@ -60,7 +60,7 @@ cp instances/example.env instances/sepolia.env   # then set NETWORK and STARKNET
 ./proof-server.sh status
 ./proof-server.sh stop
 ```
-`setup` takes 20 to 30 minutes and about 8 GB of disk; a proof used up to 1.6 GB of RAM (sampled). Full guide (prerequisites, site keys and quotas, HTTPS through Caddy): `proofServer/INSTALL.md`. Commands and API: `proofServer/README.md`.
+`setup` takes 20 to 30 minutes and about 8 GB of disk; a proof used up to 2.4 GB of RAM (sampled, `snip36` v1.4.2). Full guide (prerequisites, site keys and quotas, HTTPS through Caddy): `proofServer/INSTALL.md`. Commands and API: `proofServer/README.md`.
 
 ## Environment Setup
 

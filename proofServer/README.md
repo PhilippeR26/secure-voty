@@ -371,7 +371,7 @@ Every field is optional; a missing one takes its default.
 
 | Field | Default | Accepted | Meaning |
 |---|---|---|---|
-| `machineSlots` | 1 | 1 to 8 | proofs at the same time on the whole machine, all instances together. A proof used up to 1.6 GB of memory. |
+| `machineSlots` | 1 | 1 to 8 | proofs at the same time on the whole machine, all instances together. A proof used up to 2.4 GB of memory (`snip36` v1.4.2). |
 | `queueMax` | 10 | 0 or more | requests waiting on one instance, **local ones included**. When it is reached, public requests are refused (`503 queue_full`); local ones are always accepted. |
 | `perSiteQueueMax` | 2 | 1 or more | requests of one site waiting **or running** on one instance. Above it: `429 site_busy`. |
 | `maxWaitSec` | 900 | 1 or more | a public request is refused (`503 wait_too_long`) when its estimated wait is longer |
